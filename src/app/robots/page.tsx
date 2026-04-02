@@ -5,7 +5,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ROBOTS } from "@/lib/mock-data"
-import { Cpu, Zap, Tool, Clock, ShieldCheck } from "lucide-react"
+import { Cpu, Zap, Wrench, Clock, ShieldCheck } from "lucide-react"
 
 export default function RobotsPage() {
   return (
@@ -77,7 +77,7 @@ export default function RobotsPage() {
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground flex items-center gap-2">
-                          <Tool size={14} /> Last Maintenance
+                          <Wrench size={14} /> Last Maintenance
                         </span>
                         <span className="font-medium">{robot.lastMaintenance}</span>
                       </div>
