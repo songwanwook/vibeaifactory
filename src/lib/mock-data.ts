@@ -58,38 +58,34 @@ export const KPIS = [
   { label: 'Defect Rate', value: '0.8%', trend: '-0.3%', status: 'optimal' },
 ];
 
-export const CHART_DATA = [
-  { time: '08:00', rate: 1100, target: 1150 },
-  { time: '09:00', rate: 1150, target: 1150 },
-  { time: '10:00', rate: 1080, target: 1150 },
-  { time: '11:00', rate: 1210, target: 1150 },
-  { time: '12:00', rate: 1190, target: 1150 },
-  { time: '13:00', rate: 1240, target: 1150 },
-  { time: '14:00', rate: 1260, target: 1150 },
-  { time: '15:00', rate: 1220, target: 1150 },
-];
-
 export const CALENDAR_EVENTS = [
-  { date: new Date(), title: 'Batch Alpha-9 Welding', type: 'production' },
-  { date: new Date(new Date().setDate(new Date().getDate() + 1)), title: 'WR-004 Calibration', type: 'maintenance' },
-  { date: new Date(new Date().setDate(new Date().getDate() - 1)), title: 'Shift B Review', type: 'personnel' },
+  { id: 1, title: '연차보고서 작성', start: 3, end: 7, color: 'bg-blue-500' },
+  { id: 2, title: 'Transguard 프로젝트', start: 5, end: 5, color: 'bg-indigo-500' },
+  { id: 3, title: '연차보고서 수정', start: 9, end: 13, color: 'bg-sky-500' },
+  { id: 4, title: '1차년도 종료', start: 31, end: 31, color: 'bg-blue-400' },
+  { id: 5, title: '2차년도 시작', start: 31, end: 31, color: 'bg-indigo-400' },
 ];
 
-export const REALTIME_PRODUCTION_DATA = [
-  { timestamp: "2024-02-15T10:00:00Z", productionRate: 105, defectRate: 1.2, robotEfficiency: 94, energyConsumption: 490 },
-  { timestamp: "2024-02-15T10:15:00Z", productionRate: 108, defectRate: 1.1, robotEfficiency: 95, energyConsumption: 505 },
-  { timestamp: "2024-02-15T10:30:00Z", productionRate: 92, defectRate: 3.5, robotEfficiency: 82, energyConsumption: 550 },
-  { timestamp: "2024-02-15T10:45:00Z", productionRate: 88, defectRate: 4.2, robotEfficiency: 78, energyConsumption: 580 },
+export const PRECEDING_PROCESS_STATUS = [
+  { name: '조립', actual: 272, expected: 575, diff: -303, unhandled: 2, unhandledExpected: 2, unhandledDiff: 0 },
+  { name: '선행의장', actual: 108, expected: 78, diff: 30, unhandled: 4, unhandledExpected: 7, unhandledDiff: '75%' },
+  { name: '1차PE', actual: 111, expected: 20, diff: 91, unhandled: '-', unhandledExpected: 5, unhandledDiff: '-' },
+  { name: '선행도장', actual: 160, expected: 200, diff: -40, unhandled: 2, unhandledExpected: 1, unhandledDiff: '50%' },
 ];
 
-export const HISTORICAL_PRODUCTION_DATA = [
-  { timestamp: "2024-02-14T10:00:00Z", productionRate: 102, defectRate: 1.5, robotEfficiency: 92, energyConsumption: 495 },
-  { timestamp: "2024-02-14T10:30:00Z", productionRate: 104, defectRate: 1.4, robotEfficiency: 93, energyConsumption: 498 },
+export const WELDING_JOB_STATUS = [
+  { process: '소조', plan: 134, actual: 222, progress: '98.5%', defect: 2, defectRate: '0.2%' },
+  { process: '중조', plan: 75, actual: 50, progress: '66.7%', defect: 1, defectRate: '2.0%' },
 ];
 
-export const EXPECTED_METRICS = {
-  productionRateMin: 95,
-  productionRateMax: 115,
-  defectRateMax: 2.5,
-  robotEfficiencyMin: 88
-};
+export const ROBOT_STATUS_GRID = [
+  { type: 'RB3', count: 4, operating: 4, standby: 0, unavailable: 0, rate: '76%' },
+  { type: 'UR20', count: 1, operating: 0, standby: 1, unavailable: 0, rate: '76%' },
+  { type: 'UR3', count: 4, operating: 2, standby: 1, unavailable: 1, rate: '76%' },
+];
+
+export const WELDING_ROBOT_KPI = [
+  { category: '제어율', rb3: '85%', ur20: '80%', ur3: '90%', other: '-', avg: '85%' },
+  { category: '생산성', rb3: '10%', ur20: '15%', ur3: '30%', other: '-', avg: '20%' },
+  { category: '정확도', rb3: '92%', ur20: '95%', ur3: '98%', other: '-', avg: '95%' },
+];
