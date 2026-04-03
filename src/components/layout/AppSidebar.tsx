@@ -48,7 +48,7 @@ const navItems = [
     icon: Cpu,
     children: [
       { name: "2-1. 자동화 장비 자산 관리", path: "/assets/inventory" },
-      { name: "2-2. 자동화 장비 유지 보수 이력 관리", path: "/assets/maintenance" },
+      { name: "2-2. 고장/수리이력 관리", path: "/assets/maintenance" },
     ],
   },
   {
