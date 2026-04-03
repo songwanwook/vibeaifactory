@@ -108,15 +108,15 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-border">
       <SidebarHeader className="p-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/20">
+        <Link href="/" className="flex items-center gap-3 group/logo outline-none transition-opacity hover:opacity-80">
+          <div className="p-2 rounded-lg bg-primary/20 transition-colors group-hover/logo:bg-primary/30">
             <Activity className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight text-foreground">WeldSense AI</h1>
             <p className="text-xs text-muted-foreground uppercase tracking-widest">Enterprise Dashboard</p>
           </div>
-        </div>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
