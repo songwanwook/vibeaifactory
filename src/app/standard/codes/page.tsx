@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -37,12 +36,14 @@ const CODES = [
 export default function CommonCodePage() {
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0f172a]">
-      {/* 노란색 상단 상태바 */}
-      <div className="bg-yellow-500 px-4 py-1.5 flex items-center gap-2">
-        <span className="text-[11px] font-bold text-slate-900">기준정보관리 [1-1 공통코드관리]</span>
+      {/* 상단 브레드크럼 영역 (노란색 제거) */}
+      <div className="px-6 py-2 border-b border-white/5 flex items-center gap-2">
+        <span className="text-[11px] font-medium text-white/50">기준정보관리</span>
+        <span className="text-[11px] text-white/30">&gt;</span>
+        <span className="text-[11px] font-medium text-white/90">1-1 공통코드관리</span>
       </div>
 
-      <div className="flex-1 p-4 space-y-4 overflow-hidden flex flex-col">
+      <div className="flex-1 p-6 space-y-4 overflow-hidden flex flex-col">
         {/* 헤더 및 버튼 영역 */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-white tracking-tight">공통코드관리</h2>
@@ -62,7 +63,7 @@ export default function CommonCodePage() {
           </div>
         </div>
 
-        {/* 상세 입력 폼 (이미지 상단 민트색 입력창 스타일 반영) */}
+        {/* 상세 입력 폼 */}
         <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 grid grid-cols-4 gap-y-4 gap-x-8">
           <div className="flex items-center gap-3">
             <Label className="text-xs text-slate-300 w-20 shrink-0">그룹코드</Label>
@@ -97,7 +98,7 @@ export default function CommonCodePage() {
           </div>
         </div>
 
-        {/* 하단 테이블 영역 (좌측 그룹 / 우측 상세) */}
+        {/* 하단 테이블 영역 */}
         <div className="flex-1 grid grid-cols-[350px_1fr] gap-4 overflow-hidden">
           {/* 좌측: 코드 그룹 목록 */}
           <div className="flex flex-col border border-white/10 rounded-lg overflow-hidden bg-slate-900">

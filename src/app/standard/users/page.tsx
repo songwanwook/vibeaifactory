@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -26,12 +25,14 @@ const USERS = [
 export default function UserManagementPage() {
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0f172a]">
-      {/* 노란색 상단 상태바 */}
-      <div className="bg-yellow-500 px-4 py-1.5 flex items-center gap-2">
-        <span className="text-[11px] font-bold text-slate-900">기준정보관리 [1-2 사용자관리]</span>
+      {/* 상단 브레드크럼 영역 (노란색 제거) */}
+      <div className="px-6 py-2 border-b border-white/5 flex items-center gap-2">
+        <span className="text-[11px] font-medium text-white/50">기준정보관리</span>
+        <span className="text-[11px] text-white/30">&gt;</span>
+        <span className="text-[11px] font-medium text-white/90">1-2 사용자관리</span>
       </div>
 
-      <div className="flex-1 p-4 space-y-4 overflow-hidden flex flex-col">
+      <div className="flex-1 p-6 space-y-4 overflow-hidden flex flex-col">
         {/* 헤더 및 버튼 영역 */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-white tracking-tight">사용자관리</h2>
