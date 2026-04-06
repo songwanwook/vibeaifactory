@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ClipboardList, Search } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 
 const ORDER_DATA = [
   { robotId: '6호기', date: '2025-06-13', orderNo: '843206_734266765_12', vessel: '843206', block: 'B13P', manager: '323187', content: '-', counts: '734266765', status: 'Y', endDate: '2025-08-18' },
@@ -24,42 +24,42 @@ const ORDER_DATA = [
 
 export default function RobotWorkOrderPage() {
   return (
-    <div className="flex flex-col h-full -m-6 bg-[#f8fafc]">
-      {/* 상단 노란색 브레드크럼 섹션 (이미지 재현) */}
-      <div className="bg-[#facc15] px-6 py-2">
-        <span className="text-sm font-bold text-black">생산 운영 현황 관리 [6-1 자동화 장비 작업 배원 관리]</span>
+    <div className="flex flex-col h-full -m-6 bg-[#0f172a]">
+      {/* 상단 브레드크럼 섹션 */}
+      <div className="px-6 py-2 border-b border-white/5 flex items-center gap-2 bg-[#0f172a]">
+        <span className="text-[11px] font-medium text-white/50">생산 운영 현황 관리</span>
+        <span className="text-[11px] text-white/30">&gt;</span>
+        <span className="text-[11px] font-medium text-white/90">6-1 자동화 장비 작업 배원 관리</span>
       </div>
 
       <div className="flex-1 p-6 space-y-4 overflow-hidden flex flex-col">
         {/* 타이틀 및 검색 바 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1 bg-slate-200 rounded">
-              <ClipboardList size={20} className="text-slate-600" />
-            </div>
-            <h2 className="text-lg font-bold text-slate-800 tracking-tight">로봇 작업오더 현황</h2>
+            <ClipboardList size={20} className="text-accent" />
+            <h2 className="text-xl font-bold text-white tracking-tight">로봇 작업오더 현황</h2>
           </div>
-          <Button size="sm" className="bg-[#334155] hover:bg-slate-700 h-8 text-xs px-6">검색</Button>
+          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs px-6">검색</Button>
         </div>
 
-        {/* 필터 바 (이미지의 민트색 스타일 재현) */}
-        <div className="bg-cyan-50 border border-cyan-100 rounded p-3 flex items-center gap-6">
+        {/* 필터 바 (다크 모드 최적화) */}
+        <div className="bg-slate-900 border border-white/10 rounded-lg p-4 flex items-center gap-6">
           <div className="flex items-center gap-3">
-            <Label className="text-xs font-bold text-slate-700 shrink-0">오더일자</Label>
+            <Label className="text-xs font-bold text-slate-300 shrink-0">오더일자</Label>
             <div className="flex items-center gap-1">
-              <Input type="date" className="h-8 w-36 bg-cyan-400/20 border-cyan-400/40 text-xs" defaultValue="2025-07-09" />
-              <span className="text-xs">~</span>
-              <Input type="date" className="h-8 w-36 bg-cyan-400/20 border-cyan-400/40 text-xs" defaultValue="2025-07-09" />
+              <Input type="date" className="h-8 w-36 bg-cyan-400/10 border-cyan-400/30 text-xs text-white" defaultValue="2025-07-09" />
+              <span className="text-xs text-slate-500">~</span>
+              <Input type="date" className="h-8 w-36 bg-cyan-400/10 border-cyan-400/30 text-xs text-white" defaultValue="2025-07-09" />
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Label className="text-xs font-bold text-slate-700 shrink-0">장비번호</Label>
-            <Input className="h-8 w-32 bg-cyan-400/20 border-cyan-400/40 text-xs text-center font-bold" defaultValue="4호기" />
+            <Label className="text-xs font-bold text-slate-300 shrink-0">장비번호</Label>
+            <Input className="h-8 w-32 bg-cyan-400/10 border-cyan-400/30 text-xs text-center font-bold text-white" defaultValue="4호기" />
           </div>
           <div className="flex items-center gap-3">
-            <Label className="text-xs font-bold text-slate-700 shrink-0">완료여부</Label>
+            <Label className="text-xs font-bold text-slate-300 shrink-0">완료여부</Label>
             <Select defaultValue="N">
-              <SelectTrigger className="h-8 w-24 bg-cyan-400/20 border-cyan-400/40 text-xs font-bold">
+              <SelectTrigger className="h-8 w-24 bg-cyan-400/10 border-cyan-400/30 text-xs font-bold text-white">
                 <SelectValue placeholder="선택" />
               </SelectTrigger>
               <SelectContent>
@@ -71,36 +71,36 @@ export default function RobotWorkOrderPage() {
           </div>
         </div>
 
-        {/* 데이터 테이블 */}
-        <div className="flex-1 border border-blue-100 rounded overflow-hidden bg-white flex flex-col shadow-sm">
+        {/* 데이터 테이블 (다크 테마) */}
+        <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col">
           <Table className="text-[11px]">
-            <TableHeader className="bg-blue-600">
-              <TableRow className="hover:bg-blue-600 border-blue-500">
-                <TableHead className="text-white text-center font-bold h-9 border-r border-blue-400/50">장비번호</TableHead>
-                <TableHead className="text-white text-center font-bold h-9 border-r border-blue-400/50">오더일자</TableHead>
-                <TableHead className="text-white text-center font-bold h-9 border-r border-blue-400/50">오더번호</TableHead>
-                <TableHead className="text-white text-center font-bold h-9 border-r border-blue-400/50">작업호선</TableHead>
-                <TableHead className="text-white text-center font-bold h-9 border-r border-blue-400/50">작업블럭</TableHead>
-                <TableHead className="text-white text-center font-bold h-9 border-r border-blue-400/50">작업담당</TableHead>
-                <TableHead className="text-white text-center font-bold h-9 border-r border-blue-400/50">작업내용</TableHead>
-                <TableHead className="text-white text-center font-bold h-9 border-r border-blue-400/50">실적횟수</TableHead>
-                <TableHead className="text-white text-center font-bold h-9 border-r border-blue-400/50">완료여부</TableHead>
+            <TableHeader className="bg-blue-600 sticky top-0 z-10">
+              <TableRow className="border-white/10 hover:bg-blue-600">
+                <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">장비번호</TableHead>
+                <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">오더일자</TableHead>
+                <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">오더번호</TableHead>
+                <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">작업호선</TableHead>
+                <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">작업블럭</TableHead>
+                <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">작업담당</TableHead>
+                <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">작업내용</TableHead>
+                <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">실적횟수</TableHead>
+                <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">완료여부</TableHead>
                 <TableHead className="text-white text-center font-bold h-9">완료날짜</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="bg-[#111827]">
               {ORDER_DATA.map((row, i) => (
-                <TableRow key={i} className={`border-slate-100 hover:bg-blue-50 cursor-pointer ${i % 2 === 1 ? 'bg-blue-50/30' : ''}`}>
-                  <TableCell className="text-center font-bold text-slate-800 border-r border-slate-100">{row.robotId}</TableCell>
-                  <TableCell className="text-center text-slate-600 border-r border-slate-100">{row.date}</TableCell>
-                  <TableCell className="text-center font-mono text-slate-700 border-r border-slate-100">{row.orderNo}</TableCell>
-                  <TableCell className="text-center text-slate-700 border-r border-slate-100">{row.vessel}</TableCell>
-                  <TableCell className="text-center font-bold text-slate-800 border-r border-slate-100">{row.block}</TableCell>
-                  <TableCell className="text-center text-slate-600 border-r border-slate-100">{row.manager}</TableCell>
-                  <TableCell className="text-center text-slate-400 border-r border-slate-100">{row.content}</TableCell>
-                  <TableCell className="text-center text-slate-600 border-r border-slate-100">{row.counts}</TableCell>
-                  <TableCell className="text-center border-r border-slate-100">
-                    <span className={row.status === 'Y' ? 'text-blue-600 font-bold' : 'text-red-500 font-bold'}>{row.status}</span>
+                <TableRow key={i} className="border-white/5 hover:bg-white/5 cursor-pointer">
+                  <TableCell className="text-center font-bold text-white border-r border-white/5">{row.robotId}</TableCell>
+                  <TableCell className="text-center text-slate-400 border-r border-white/5">{row.date}</TableCell>
+                  <TableCell className="text-center font-mono text-slate-300 border-r border-white/5">{row.orderNo}</TableCell>
+                  <TableCell className="text-center text-slate-300 border-r border-white/5">{row.vessel}</TableCell>
+                  <TableCell className="text-center font-bold text-white border-r border-white/5">{row.block}</TableCell>
+                  <TableCell className="text-center text-slate-400 border-r border-white/5">{row.manager}</TableCell>
+                  <TableCell className="text-center text-slate-500 border-r border-white/5">{row.content}</TableCell>
+                  <TableCell className="text-center text-slate-300 border-r border-white/5">{row.counts}</TableCell>
+                  <TableCell className="text-center border-r border-white/5">
+                    <span className={row.status === 'Y' ? 'text-blue-400 font-bold' : 'text-red-400 font-bold'}>{row.status}</span>
                   </TableCell>
                   <TableCell className="text-center text-slate-500">{row.endDate}</TableCell>
                 </TableRow>
@@ -109,7 +109,6 @@ export default function RobotWorkOrderPage() {
           </Table>
         </div>
 
-        {/* 페이지네이션 (이미지 스타일) */}
         <div className="flex items-center gap-1">
           <div className="w-6 h-6 bg-teal-600 flex items-center justify-center text-[10px] text-white rounded">1</div>
         </div>
