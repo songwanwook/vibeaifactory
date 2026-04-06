@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, 
@@ -53,6 +53,14 @@ const RADAR_DATA = [
 ];
 
 export default function BusinessKpiPage() {
+  const [mounted, setMounted] = useState(false);
+  const [gaugeValues, setGaugeValues] = useState<number[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+    setGaugeValues([1, 2, 3, 4, 5, 6, 7, 8].map(() => Math.floor(Math.random() * 30) + 70));
+  }, []);
+
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0b1120] text-white">
       <div className="bg-[#facc15] px-6 py-1 flex items-center">
@@ -97,9 +105,13 @@ export default function BusinessKpiPage() {
           <Card className="bg-[#0f172a] border-white/10 flex flex-col">
             <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">부문별 KPI 게이지</div>
             <div className="flex-1 grid grid-cols-4 gap-2 p-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
-                <Gauge key={n} value={Math.floor(Math.random() * 30) + 70} label={`Metric ${n}`} />
-              ))}
+              {mounted ? (
+                gaugeValues.map((val, i) => (
+                  <Gauge key={i} value={val} label={`Metric ${i + 1}`} />
+                ))
+              ) : (
+                <div className="col-span-4 flex items-center justify-center text-slate-500 text-xs">Loading...</div>
+              )}
             </div>
           </Card>
 

@@ -1,14 +1,13 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, 
   CartesianGrid, Tooltip, Legend, BarChart, Bar, ComposedChart 
 } from 'recharts';
 
-// 게이지 컴포넌트 (Recharts PieChart 이용)
 const Gauge = ({ value, label }: { value: number, label: string }) => {
   const data = [
     { value: value, color: '#0ea5e9' },
@@ -54,16 +53,23 @@ const LINE_DATA = [
   { name: '6', e1: 18, e2: 25, e3: 20, e4: 22 },
 ];
 
-const MIXED_DATA = Array.from({ length: 10 }, (_, i) => ({
-  name: i + 1,
-  bar: Math.floor(Math.random() * 100) + 50,
-  line: Math.floor(Math.random() * 80) + 20,
-}));
-
 export default function WeldingProgressPage() {
+  const [mounted, setMounted] = useState(false);
+  const [gaugeValues, setGaugeValues] = useState<number[]>([]);
+  const [mixedData, setMixedData] = useState<any[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+    setGaugeValues([1, 2, 3, 4, 5, 6, 7, 8].map(() => Math.floor(Math.random() * 100)));
+    setMixedData(Array.from({ length: 10 }, (_, i) => ({
+      name: i + 1,
+      bar: Math.floor(Math.random() * 100) + 50,
+      line: Math.floor(Math.random() * 80) + 20,
+    })));
+  }, []);
+
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0b1120] text-white">
-      {/* 상단 노란색 상태바 */}
       <div className="bg-[#facc15] px-6 py-1 flex items-center">
         <span className="text-black text-xs font-bold">생산 운영 현황 관리 [6-4 스테이지별 용접 공정 진척도 관리]</span>
       </div>
@@ -71,7 +77,6 @@ export default function WeldingProgressPage() {
       <div className="flex-1 p-4 space-y-3 overflow-y-auto">
         <h2 className="text-sm font-bold pl-1">실시간 용접 진척 현황</h2>
         
-        {/* 상단 6개 요약 카드 */}
         <div className="grid grid-cols-6 gap-2">
           {[
             { label: '1 Block', sub: '작업 실적', value: '', color: 'bg-purple-800' },
@@ -88,7 +93,6 @@ export default function WeldingProgressPage() {
           ))}
         </div>
 
-        {/* 중단 3개 영역 */}
         <div className="grid grid-cols-3 gap-3 h-[280px]">
           <Card className="bg-[#0f172a] border-white/10 flex flex-col">
             <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">정보</div>
@@ -108,9 +112,13 @@ export default function WeldingProgressPage() {
           <Card className="bg-[#0f172a] border-white/10 flex flex-col">
             <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">실시간 장비별 용접 현황</div>
             <div className="flex-1 grid grid-cols-4 gap-2 p-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
-                <Gauge key={n} value={Math.floor(Math.random() * 100)} label={`${n}`} />
-              ))}
+              {mounted ? (
+                gaugeValues.map((val, i) => (
+                  <Gauge key={i} value={val} label={`${i + 1}`} />
+                ))
+              ) : (
+                <div className="col-span-4 flex items-center justify-center text-slate-500 text-xs">Loading...</div>
+              )}
             </div>
           </Card>
 
@@ -133,13 +141,12 @@ export default function WeldingProgressPage() {
           </Card>
         </div>
 
-        {/* 하단 3개 영역 */}
         <div className="grid grid-cols-3 gap-3 h-[280px]">
           <Card className="bg-[#0f172a] border-white/10 flex flex-col">
             <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">용접봉 누적 사용량</div>
             <div className="flex-1 p-2">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={MIXED_DATA}>
+                <ComposedChart data={mixedData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                   <XAxis dataKey="name" tick={{fill: '#64748b', fontSize: 10}} />
                   <YAxis tick={{fill: '#64748b', fontSize: 10}} />

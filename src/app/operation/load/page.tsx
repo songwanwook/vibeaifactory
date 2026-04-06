@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, 
@@ -44,13 +44,21 @@ const Gauge = ({ value, label }: { value: number, label: string }) => {
   );
 };
 
-const CHART_DATA = Array.from({ length: 8 }, (_, i) => ({
-  name: `Line ${i+1}`,
-  val: Math.floor(Math.random() * 100),
-  target: 80
-}));
-
 export default function ProductionLoadPage() {
+  const [mounted, setMounted] = useState(false);
+  const [gaugeValues, setGaugeValues] = useState<number[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+    setGaugeValues([1, 2, 3, 4, 5, 6, 7, 8].map(() => Math.floor(Math.random() * 40) + 60));
+    setChartData(Array.from({ length: 8 }, (_, i) => ({
+      name: `Line ${i+1}`,
+      val: Math.floor(Math.random() * 100),
+      target: 80
+    })));
+  }, []);
+
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0b1120] text-white">
       <div className="bg-[#facc15] px-6 py-1 flex items-center">
@@ -95,9 +103,13 @@ export default function ProductionLoadPage() {
           <Card className="bg-[#0f172a] border-white/10 flex flex-col">
             <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">공정별 실시간 부하율</div>
             <div className="flex-1 grid grid-cols-4 gap-2 p-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
-                <Gauge key={n} value={Math.floor(Math.random() * 40) + 60} label={`Stage ${n}`} />
-              ))}
+              {mounted ? (
+                gaugeValues.map((val, i) => (
+                  <Gauge key={i} value={val} label={`Stage ${i + 1}`} />
+                ))
+              ) : (
+                <div className="col-span-4 flex items-center justify-center text-slate-500 text-xs">Loading...</div>
+              )}
             </div>
           </Card>
 
@@ -105,7 +117,7 @@ export default function ProductionLoadPage() {
             <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">라인별 부하 추이</div>
             <div className="flex-1 p-2">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={CHART_DATA}>
+                <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                   <XAxis dataKey="name" hide />
                   <YAxis tick={{fill: '#64748b', fontSize: 10}} />
@@ -122,7 +134,7 @@ export default function ProductionLoadPage() {
             <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">할당 시간 분포</div>
             <div className="flex-1 p-2">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={CHART_DATA}>
+                <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                   <XAxis dataKey="name" hide />
                   <YAxis tick={{fill: '#64748b', fontSize: 10}} />
@@ -136,7 +148,7 @@ export default function ProductionLoadPage() {
             <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">스테이지별 가용성</div>
             <div className="flex-1 p-2">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={CHART_DATA} layout="vertical">
+                <BarChart data={chartData} layout="vertical">
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" tick={{fill: '#64748b', fontSize: 10}} width={40} />
                   <Bar dataKey="val" fill="#8b5cf6" barSize={15} />
@@ -149,7 +161,7 @@ export default function ProductionLoadPage() {
             <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">예상 부하 집중도</div>
             <div className="flex-1 p-2">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={CHART_DATA}>
+                <ComposedChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                   <XAxis dataKey="name" hide />
                   <YAxis tick={{fill: '#64748b', fontSize: 10}} />
