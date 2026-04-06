@@ -1,93 +1,164 @@
+
 'use client';
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { BarChart3, Search } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, 
+  CartesianGrid, Tooltip, Legend, BarChart, Bar, ComposedChart 
+} from 'recharts';
 
-const LOAD_DATA = [
-  { process: '용접 1라인', capacity: 480, allocated: 450, load: 93.7, status: '과부하' },
-  { process: '용접 2라인', capacity: 480, allocated: 320, load: 66.6, status: '정상' },
-  { process: '조립 Stage A', capacity: 240, allocated: 180, load: 75.0, status: '정상' },
-  { process: '조립 Stage B', capacity: 240, allocated: 220, load: 91.6, status: '주의' },
-  { process: '도장 라인', capacity: 600, allocated: 120, load: 20.0, status: '여유' },
-];
+const Gauge = ({ value, label }: { value: number, label: string }) => {
+  const data = [
+    { value: value, color: '#10b981' },
+    { value: 100 - value, color: '#1e293b' }
+  ];
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-24 h-16">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="100%"
+              startAngle={180}
+              endAngle={0}
+              innerRadius={25}
+              outerRadius={40}
+              paddingAngle={0}
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute bottom-0 left-0 right-0 text-center text-[10px] font-bold text-white">
+          {value}%
+        </div>
+      </div>
+      <span className="text-[10px] text-slate-400 mt-1">{label}</span>
+    </div>
+  );
+};
+
+const CHART_DATA = Array.from({ length: 8 }, (_, i) => ({
+  name: `Line ${i+1}`,
+  val: Math.floor(Math.random() * 100),
+  target: 80
+}));
 
 export default function ProductionLoadPage() {
   return (
-    <div className="flex flex-col h-full -m-6 bg-[#0f172a]">
-      <div className="px-6 py-2 border-b border-white/5 flex items-center gap-2">
-        <span className="text-[11px] font-medium text-white/50">생산 운영 현황 관리</span>
-        <span className="text-[11px] text-white/30">&gt;</span>
-        <span className="text-[11px] font-medium text-white/90">6-6 공정별 생산 부하 관리</span>
+    <div className="flex flex-col h-full -m-6 bg-[#0b1120] text-white">
+      <div className="bg-[#facc15] px-6 py-1 flex items-center">
+        <span className="text-black text-xs font-bold">생산 운영 현황 관리 [6-6 공정별 생산 부하 관리]</span>
       </div>
 
-      <div className="flex-1 p-6 space-y-4 overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 size={20} className="text-accent" />
-            <h2 className="text-xl font-bold text-white tracking-tight">공정별 생산 부하 분석</h2>
-          </div>
-          <Button size="sm" className="bg-blue-600 h-8 text-xs px-6">부하 재계산</Button>
+      <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+        <h2 className="text-sm font-bold pl-1">실시간 공정 부하 현황</h2>
+        
+        <div className="grid grid-cols-6 gap-2">
+          {[
+            { label: 'A Line', sub: '현재 부하', value: '92%', color: 'bg-purple-800' },
+            { label: 'B Line', sub: '현재 부하', value: '75%', color: 'bg-blue-800' },
+            { label: 'C Line', sub: '현재 부하', value: '45%', color: 'bg-teal-600' },
+            { label: '가동률', sub: '평균', value: '82%', color: 'bg-yellow-500 text-black' },
+            { label: '대기시간', sub: '총합', value: '12h', color: 'bg-red-600' },
+            { label: '병목지점', sub: '2개소', value: '', color: 'bg-orange-600' },
+          ].map((card, i) => (
+            <div key={i} className={`${card.color} p-2 rounded border border-white/10`}>
+              <p className="text-[11px] font-bold">{card.label}</p>
+              <p className="text-[9px] opacity-80">{card.sub} {card.value}</p>
+            </div>
+          ))}
         </div>
 
-        <div className="bg-slate-900 border border-white/10 rounded-lg p-4 flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <Label className="text-xs font-bold text-slate-300 shrink-0">기준일자</Label>
-            <Input type="date" className="h-8 bg-cyan-400/10 border-cyan-400/30 text-xs text-white" defaultValue="2025-07-09" />
-          </div>
-          <Button size="sm" variant="secondary" className="bg-slate-700 text-white h-8 text-xs px-4 ml-auto">
-            <Search className="w-3.5 h-3.5 mr-1" /> 조회
-          </Button>
-        </div>
+        <div className="grid grid-cols-3 gap-3 h-[280px]">
+          <Card className="bg-[#0f172a] border-white/10 flex flex-col">
+            <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">부하 요약</div>
+            <div className="flex-1 p-4 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xl font-bold">Current Shift</h3>
+                <p className="text-2xl font-black mt-2 text-blue-400">Normal Operation</p>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-black text-slate-500">Day Shift</p>
+                <p className="text-xl font-bold mt-4">Capacity: 480m/h</p>
+                <p className="text-lg font-bold mt-8">관리자 : 김철수</p>
+              </div>
+            </div>
+          </Card>
 
-        <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col">
-          <Table className="text-[11px]">
-            <TableHeader className="bg-blue-600 sticky top-0 z-10">
-              <TableRow className="border-white/10 hover:bg-blue-600">
-                <TableHead className="text-white text-center font-bold h-9">공정/라인명</TableHead>
-                <TableHead className="text-white text-center font-bold h-9">가용 시간(Min)</TableHead>
-                <TableHead className="text-white text-center font-bold h-9">할당 시간(Min)</TableHead>
-                <TableHead className="text-white text-center font-bold h-9 w-64">부하율 추이</TableHead>
-                <TableHead className="text-white text-center font-bold h-9">부하상태</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="bg-[#111827]">
-              {LOAD_DATA.map((row, i) => (
-                <TableRow key={i} className="border-white/5 hover:bg-white/5">
-                  <TableCell className="text-center font-bold text-white border-r border-white/5">{row.process}</TableCell>
-                  <TableCell className="text-center text-slate-400 border-r border-white/5">{row.capacity}</TableCell>
-                  <TableCell className="text-center text-slate-300 border-r border-white/5">{row.allocated}</TableCell>
-                  <TableCell className="px-6 border-r border-white/5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                        <div className={`h-full ${
-                          row.load > 90 ? 'bg-red-500' : row.load > 70 ? 'bg-yellow-500' : 'bg-green-500'
-                        }`} style={{ width: `${row.load}%` }} />
-                      </div>
-                      <span className="font-mono text-white text-[10px] w-10 text-right">{row.load}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center font-bold">
-                    <span className={
-                      row.status === '과부하' ? 'text-red-400' : 
-                      row.status === '주의' ? 'text-yellow-400' : 
-                      row.status === '여유' ? 'text-blue-400' : 'text-green-400'
-                    }>{row.status}</span>
-                  </TableCell>
-                </TableRow>
+          <Card className="bg-[#0f172a] border-white/10 flex flex-col">
+            <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">공정별 실시간 부하율</div>
+            <div className="flex-1 grid grid-cols-4 gap-2 p-2">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
+                <Gauge key={n} value={Math.floor(Math.random() * 40) + 60} label={`Stage ${n}`} />
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          </Card>
+
+          <Card className="bg-[#0f172a] border-white/10 flex flex-col">
+            <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">라인별 부하 추이</div>
+            <div className="flex-1 p-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={CHART_DATA}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="name" hide />
+                  <YAxis tick={{fill: '#64748b', fontSize: 10}} />
+                  <Line type="monotone" dataKey="val" stroke="#10b981" strokeWidth={2} dot={{r: 3}} />
+                  <Line type="monotone" dataKey="target" stroke="#ef4444" strokeDasharray="5 5" dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 h-[280px]">
+          <Card className="bg-[#0f172a] border-white/10 flex flex-col">
+            <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">할당 시간 분포</div>
+            <div className="flex-1 p-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={CHART_DATA}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="name" hide />
+                  <YAxis tick={{fill: '#64748b', fontSize: 10}} />
+                  <Bar dataKey="val" fill="#3b82f6" barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card className="bg-[#0f172a] border-white/10 flex flex-col">
+            <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">스테이지별 가용성</div>
+            <div className="flex-1 p-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={CHART_DATA} layout="vertical">
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" tick={{fill: '#64748b', fontSize: 10}} width={40} />
+                  <Bar dataKey="val" fill="#8b5cf6" barSize={15} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card className="bg-[#0f172a] border-white/10 flex flex-col">
+            <div className="bg-blue-900/50 px-3 py-1 text-[10px] font-bold border-b border-white/5">예상 부하 집중도</div>
+            <div className="flex-1 p-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={CHART_DATA}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="name" hide />
+                  <YAxis tick={{fill: '#64748b', fontSize: 10}} />
+                  <Bar dataKey="val" fill="#f97316" barSize={15} />
+                  <Line type="step" dataKey="target" stroke="#ffffff" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
         </div>
       </div>
     </div>
