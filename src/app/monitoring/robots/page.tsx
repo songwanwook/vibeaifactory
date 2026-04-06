@@ -45,9 +45,11 @@ type JointData = {
 
 export default function RobotsMonitoringPage() {
   const [joints, setJoints] = useState<JointData[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Client-side only data generation to avoid hydration mismatch
+    setMounted(true);
+    // Client-side only data generation after mount to avoid hydration mismatch
     const generatedJoints = [1, 2, 3, 4, 5, 6].map((j) => ({
       id: j,
       angle: `${(Math.random() * 180).toFixed(2)}°`,
@@ -153,7 +155,7 @@ export default function RobotsMonitoringPage() {
               </TableRow>
             </TableHeader>
             <TableBody className="bg-[#111827]">
-              {joints.length > 0 ? (
+              {mounted && joints.length > 0 ? (
                 joints.map((joint) => (
                   <TableRow key={joint.id} className="border-white/5">
                     <TableCell className="text-center font-bold text-slate-400">Joint {joint.id}</TableCell>
