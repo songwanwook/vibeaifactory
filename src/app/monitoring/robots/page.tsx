@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -35,7 +35,29 @@ const LOG_DATA = [
   { time: '13:55:45', robot: 'WR-04', event: '비상 정지 해제', type: 'INFO' },
 ];
 
+type JointData = {
+  id: number;
+  angle: string;
+  velocity: string;
+  torque: string;
+  errorCode: string;
+};
+
 export default function RobotsMonitoringPage() {
+  const [joints, setJoints] = useState<JointData[]>([]);
+
+  useEffect(() => {
+    // Client-side only data generation to avoid hydration mismatch
+    const generatedJoints = [1, 2, 3, 4, 5, 6].map((j) => ({
+      id: j,
+      angle: `${(Math.random() * 180).toFixed(2)}°`,
+      velocity: '0.85 rad/s',
+      torque: (Math.random() * 50).toFixed(1),
+      errorCode: '0x00 (Normal)',
+    }));
+    setJoints(generatedJoints);
+  }, []);
+
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0b1120] text-white">
       <div className="px-6 py-2 border-b border-white/5 flex items-center gap-2 bg-[#0f172a]">
@@ -131,15 +153,23 @@ export default function RobotsMonitoringPage() {
               </TableRow>
             </TableHeader>
             <TableBody className="bg-[#111827]">
-              {[1, 2, 3, 4, 5, 6].map((j) => (
-                <TableRow key={j} className="border-white/5">
-                  <TableCell className="text-center font-bold text-slate-400">Joint {j}</TableCell>
-                  <TableCell className="text-center text-white">{(Math.random() * 180).toFixed(2)}°</TableCell>
-                  <TableCell className="text-center text-accent">0.85 rad/s</TableCell>
-                  <TableCell className="text-center text-white">{(Math.random() * 50).toFixed(1)}</TableCell>
-                  <TableCell className="text-center text-slate-500">0x00 (Normal)</TableCell>
+              {joints.length > 0 ? (
+                joints.map((joint) => (
+                  <TableRow key={joint.id} className="border-white/5">
+                    <TableCell className="text-center font-bold text-slate-400">Joint {joint.id}</TableCell>
+                    <TableCell className="text-center text-white">{joint.angle}</TableCell>
+                    <TableCell className="text-center text-accent">{joint.velocity}</TableCell>
+                    <TableCell className="text-center text-white">{joint.torque}</TableCell>
+                    <TableCell className="text-center text-slate-500">{joint.errorCode}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-slate-500 italic">
+                    데이터 로딩 중...
+                  </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>
