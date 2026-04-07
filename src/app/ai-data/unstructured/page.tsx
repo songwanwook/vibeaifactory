@@ -1,17 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -20,139 +12,270 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Search, Plus, FileText, ExternalLink, Download } from "lucide-react";
+import { Search, Loader2, Image as ImageIcon, AlertTriangle, MapPin, Calendar, User, Info } from "lucide-react";
 
-const UNSTRUCTURED_DATA = [
-  { id: 'DOC-001', title: '용접 표준 절차서(WPS)', type: 'PDF', size: '2.4MB', date: '2025-01-10', author: '강감찬' },
-  { id: 'DOC-002', title: '로봇 암 경로 최적화 로그', type: 'TXT', size: '1.1MB', date: '2025-01-12', author: '김유신' },
-  { id: 'DOC-003', title: '열변형 시뮬레이션 결과 리포트', type: 'DOCX', size: '4.5MB', date: '2025-01-15', author: '을지문덕' },
-  { id: 'DOC-004', title: 'AI 모델 학습용 용접 파형 데이터', type: 'CSV', size: '15.8MB', date: '2025-01-18', author: '이순신', hasModal: true },
-  { id: 'DOC-005', title: '장비 유지보수 매뉴얼 v2.0', type: 'PDF', size: '8.2MB', date: '2025-01-20', author: '장보고' },
-];
+interface AbnPict {
+  ErrNum: number;
+  ErrDate: string;
+  ProjNo: string;
+  BlockName: string;
+  RobotNo: string;
+  ErrInfo: string;
+  LocationMM: number;
+  LocationX: number;
+  LocationY: number;
+  Action: string;
+}
 
 export default function UnstructuredDataPage() {
+  const [data, setData] = useState<AbnPict[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<AbnPict | null>(null);
+  
+  const [filter, setFilter] = useState({
+    projNo: '',
+    blockName: '',
+    robotNo: ''
+  });
 
-  const handleOpenModal = (item: any) => {
-    setSelectedData(item);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filter.projNo) params.append('projNo', filter.projNo);
+      if (filter.blockName) params.append('blockName', filter.blockName);
+      if (filter.robotNo) params.append('robotNo', filter.robotNo);
+
+      const res = await fetch(`/api/abn-picts?${params.toString()}`);
+      const result = await res.json();
+      if (Array.isArray(result)) {
+        setData(result);
+      }
+    } catch (error) {
+      console.error('Failed to fetch abn picts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleOpenDetail = (item: AbnPict) => {
+    setSelectedItem(item);
     setIsModalOpen(true);
   };
 
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0f172a]">
-      <div className="px-6 py-2 border-b border-white/5 flex items-center gap-2">
+      {/* 상단 브레드크럼 */}
+      <div className="px-6 py-2 border-b border-white/5 flex items-center gap-2 bg-[#0f172a]">
         <span className="text-[11px] font-medium text-white/50">인공지능 데이터 관리</span>
         <span className="text-[11px] text-white/30">&gt;</span>
-        <span className="text-[11px] font-medium text-white/90">3-4 비정형 데이터 관리</span>
+        <span className="text-[11px] font-medium text-white/90">3-4 비정형 데이터(용접불량 이미지) 관리</span>
       </div>
 
       <div className="flex-1 p-6 space-y-4 overflow-hidden flex flex-col">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white tracking-tight">비정형 데이터 관리</h2>
+          <h2 className="text-xl font-bold text-white tracking-tight">비정형 데이터 관리 <span className="text-sm font-normal text-slate-500 ml-2">용접 불량 이미지 분석</span></h2>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" className="bg-slate-700 text-white h-8 text-xs px-4">
-              <Plus className="w-3.5 h-3.5 mr-1" /> 업로드
-            </Button>
+             <span className="text-[11px] text-slate-400 mr-2">Total: <b className="text-blue-400">{data.length}</b> images</span>
           </div>
         </div>
 
-        <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 flex items-center gap-4">
-          <div className="flex items-center gap-3 flex-1 max-w-sm">
-            <Label className="text-xs text-slate-300 w-16 shrink-0">데이터 검색</Label>
-            <div className="relative flex-1">
-              <Input className="h-8 bg-slate-900 border-white/10 text-xs pr-8" placeholder="제목 또는 작성자 검색..." />
-              <Search className="absolute right-2.5 top-2 w-3.5 h-3.5 text-slate-500" />
+        {/* 검색 필터 */}
+        <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 grid grid-cols-4 gap-4 items-end">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider ml-1">호선번호</Label>
+            <Input 
+              value={filter.projNo} 
+              onChange={(e) => setFilter(prev => ({...prev, projNo: e.target.value}))}
+              className="h-8 bg-slate-900 border-white/10 text-xs text-white" 
+              placeholder="예: 843206"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider ml-1">블록명</Label>
+            <Input 
+              value={filter.blockName} 
+              onChange={(e) => setFilter(prev => ({...prev, blockName: e.target.value}))}
+              className="h-8 bg-slate-900 border-white/10 text-xs text-white" 
+              placeholder="예: B13P"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider ml-1">로봇번호</Label>
+            <Input 
+              value={filter.robotNo} 
+              onChange={(e) => setFilter(prev => ({...prev, robotNo: e.target.value}))}
+              className="h-8 bg-slate-900 border-white/10 text-xs text-white" 
+              placeholder="예: 1호기"
+            />
+          </div>
+          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs font-bold" onClick={fetchData}>
+            <Search className="w-3.5 h-3.5 mr-1.5" /> 조회 및 분석
+          </Button>
+        </div>
+
+        {/* 이미지 그리드 영역 */}
+        <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
             </div>
-          </div>
-          <Button size="sm" className="bg-blue-600 h-8 text-xs px-6">조회</Button>
-        </div>
-
-        <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col">
-          <Table className="text-[11px]">
-            <TableHeader className="bg-blue-600 sticky top-0 z-10">
-              <TableRow className="border-white/10 hover:bg-blue-600">
-                <TableHead className="text-white text-center font-bold h-9">ID</TableHead>
-                <TableHead className="text-white text-center font-bold h-9">제목</TableHead>
-                <TableHead className="text-white text-center font-bold h-9">유형</TableHead>
-                <TableHead className="text-white text-center font-bold h-9">용량</TableHead>
-                <TableHead className="text-white text-center font-bold h-9">작성일</TableHead>
-                <TableHead className="text-white text-center font-bold h-9">작성자</TableHead>
-                <TableHead className="text-white text-center font-bold h-9">관리</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {UNSTRUCTURED_DATA.map((item, i) => (
-                <TableRow key={i} className="border-white/5 hover:bg-blue-500/20">
-                  <TableCell className="text-center text-slate-400">{item.id}</TableCell>
-                  <TableCell className="text-left text-white font-medium pl-4">
-                    <div className="flex items-center gap-2">
-                      <FileText size={14} className="text-blue-400" />
-                      {item.title}
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {data.map((item) => (
+                <div 
+                  key={item.ErrNum} 
+                  className="group bg-slate-900 border border-white/5 rounded-xl overflow-hidden cursor-pointer hover:border-blue-500/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all duration-300"
+                  onClick={() => handleOpenDetail(item)}
+                >
+                  {/* 이미지 썸네일 (Placeholder) */}
+                  <div className="aspect-[4/3] bg-slate-800 relative flex items-center justify-center overflow-hidden">
+                    {/* 실제 이미지가 없으므로 스타일링된 플레이스홀더 사용 */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
+                    <ImageIcon className="w-10 h-10 text-slate-700 group-hover:scale-110 transition-transform duration-500" />
+                    
+                    {/* 오버레이 정보 */}
+                    <div className="absolute top-2 right-2">
+                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                        item.Action === '완료' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      }`}>
+                        {item.Action}
+                      </span>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-center text-slate-300">{item.type}</TableCell>
-                  <TableCell className="text-center text-slate-300">{item.size}</TableCell>
-                  <TableCell className="text-center text-slate-300">{item.date}</TableCell>
-                  <TableCell className="text-center text-slate-300">{item.author}</TableCell>
-                  <TableCell className="text-center">
-                    {item.hasModal ? (
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/10"
-                        onClick={() => handleOpenModal(item)}
-                      >
-                        <ExternalLink size={12} className="mr-1" /> 상세보기
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="ghost" className="h-7 text-[10px] text-slate-400">
-                        <Download size={12} className="mr-1" /> 다운로드
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
+                    
+                    {/* 하단 에러 텍스트 */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <p className="text-[10px] text-white font-medium truncate">{item.ErrInfo}</p>
+                    </div>
+                  </div>
+                  
+                  {/* 카드 정보 */}
+                  <div className="p-3 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-mono text-blue-400">#ERR-{item.ErrNum}</span>
+                      <span className="text-[10px] text-slate-500">{item.ErrDate}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-[11px] text-white">
+                        <span className="text-slate-500 w-12 shrink-0">호선/블록</span>
+                        <span>{item.ProjNo} / {item.BlockName}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-white">
+                        <span className="text-slate-500 w-12 shrink-0">로봇번호</span>
+                        <span className="text-teal-400 font-medium">{item.RobotNo}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          )}
+          
+          {!loading && data.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-64 text-slate-500 space-y-2">
+              <AlertTriangle className="w-10 h-10 text-slate-700" />
+              <p className="text-sm">조회된 불량 데이터가 없습니다.</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 상세 보기 모달 (3-4 요구사항) */}
+      {/* 상세 정보 모달 */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-slate-900 border-white/10 text-white max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="text-blue-400" />
-              데이터 상세 정보
-            </DialogTitle>
-            <DialogDescription className="text-slate-400">
-              {selectedData?.title}에 대한 AI 분석 및 원천 데이터 정보입니다.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <div className="space-y-1">
-              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">데이터 ID</p>
-              <p className="text-sm font-mono text-blue-300">{selectedData?.id}</p>
+        <DialogContent className="bg-slate-950 border border-white/10 text-white max-w-3xl overflow-hidden p-0 gap-0">
+          <div className="grid grid-cols-[1fr_300px] h-[500px]">
+            {/* 왼쪽: 이미지 확대 영역 */}
+            <div className="bg-black flex flex-col">
+              <div className="flex-1 relative flex items-center justify-center bg-[#050505]">
+                <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                   <div className="w-full h-full border-[0.5px] border-white/5 grid grid-cols-8 grid-rows-8" />
+                </div>
+                <div className="z-10 flex flex-col items-center">
+                  <AlertTriangle className="w-16 h-16 text-red-500/50 mb-4" />
+                  <p className="text-xs text-slate-500 font-mono tracking-widest">WELDING DEFECT CAPTURE</p>
+                </div>
+                
+                {/* 좌표 오버레이 가이드 */}
+                <div className="absolute bottom-4 left-4 font-mono text-[10px] text-teal-500 flex gap-4">
+                  <span>X: {selectedItem?.LocationX}</span>
+                  <span>Y: {selectedItem?.LocationY}</span>
+                  <span>POS: {selectedItem?.LocationMM}mm</span>
+                </div>
+              </div>
+              <div className="h-12 bg-slate-900 border-t border-white/5 flex items-center px-4 justify-between">
+                <div className="flex items-center gap-2 text-[11px] font-medium text-slate-300">
+                  <ImageIcon size={14} className="text-blue-400" />
+                  용접비드 이미지 분석 결과
+                </div>
+                <span className="text-[10px] text-slate-500 italic">Analysis confidence: 98.2%</span>
+              </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">포맷 / 용량</p>
-              <p className="text-sm">{selectedData?.type} / {selectedData?.size}</p>
-            </div>
-            <div className="col-span-2 space-y-1">
-              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">분석 요약</p>
-              <div className="bg-slate-800 p-3 rounded text-xs text-slate-300 leading-relaxed border border-white/5">
-                해당 CSV 데이터는 2025년 1월 18일 용접 자동화 라인 6호기에서 수집된 파형 데이터입니다. 
-                AI 모델 학습을 위해 전처리가 완료되었으며, 주요 특징점으로 전압 변동성(Voltage Variance) 수치가 포함되어 있습니다.
+
+            {/* 오른쪽: 상세 정보 텍스트 */}
+            <div className="p-6 border-l border-white/10 flex flex-col space-y-6">
+              <DialogHeader className="space-y-4 text-left">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-lg w-fit">
+                  <AlertTriangle size={16} className="text-red-400" />
+                  <span className="text-sm font-bold text-red-400">결함 감지됨</span>
+                </div>
+                
+                <DialogTitle className="text-lg font-bold text-white leading-tight">
+                  {selectedItem?.ErrInfo}
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                  용접 불량 상세 정보 및 분석 결과 화면입니다.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Calendar size={14} className="text-slate-500 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">발생 일시</p>
+                      <p className="text-sm text-slate-300">{selectedItem?.ErrDate}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <MapPin size={14} className="text-slate-500 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">호선 / 블록</p>
+                      <p className="text-sm text-slate-300">{selectedItem?.ProjNo} / {selectedItem?.BlockName}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <User size={14} className="text-slate-500 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">담당 로봇</p>
+                      <p className="text-sm text-teal-400 font-bold">{selectedItem?.RobotNo}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Info size={14} className="text-slate-500 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">조치 상태</p>
+                      <span className={`text-[11px] px-2 py-0.5 rounded-md font-bold mt-1 inline-block ${
+                        selectedItem?.Action === '완료' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                      }`}>
+                        {selectedItem?.Action}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-end">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 font-bold h-10" onClick={() => setIsModalOpen(false)}>
+                  확인 완료
+                </Button>
               </div>
             </div>
           </div>
-
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)} className="bg-slate-700 text-white hover:bg-slate-600">닫기</Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">분석 리포트 다운로드</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

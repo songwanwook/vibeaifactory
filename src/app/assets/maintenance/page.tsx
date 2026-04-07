@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,19 +13,207 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Save, Trash2, Download, AlertCircle } from "lucide-react";
+import { Search, Plus, Save, Download, Loader2, History, Wrench } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const HISTORY = [
-  { id: '1', robotId: '10호기', robotName: '10호기', type: '고장', content: '모터 과부하 발생', action: '모터 교체 및 윤활유 보충', date: '2025-01-15', status: '조치완료', worker: '홍길동' },
-  { id: '2', robotId: '1호기', robotName: '1호기', type: '정기점검', content: '센서 감도 정밀 점검', action: '정밀 교정 및 청소', date: '2025-01-10', status: '조치완료', worker: '김철수' },
-  { id: '3', robotId: '6호기', robotName: '6호기', type: '고장', content: '통신 에러 빈발', action: '케이블 점검 및 펌웨어 업데이트', date: '2025-01-20', status: '진행중', worker: '이영희' },
-  { id: '4', robotId: '3호기', robotName: '3호기', type: '정기점검', content: '소음 발생', action: '베어링 교체 예정', date: '2025-01-22', status: '대기', worker: '관리자' },
-];
+interface Breakdown {
+  BreakdnNo: string;
+  RobotNo: string;
+  BreakdnDate: string;
+  BreakdnReason: string | null;
+  BreakdnDesc: string;
+  EmployeeNumber: string;
+}
+
+interface Repair {
+  RepairNo: string;
+  BreakdnNo: string;
+  RobotNo: string;
+  RepairDateTime: string;
+  RepairPart: string;
+  RepairCost: string | null;
+  RepairDesc: string | null;
+}
 
 export default function MalfunctionHistoryPage() {
+  const [activeTab, setActiveTab] = useState("breakdown");
+  const [breakdowns, setBreakdowns] = useState<Breakdown[]>([]);
+  const [repairs, setRepairs] = useState<Repair[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [robots, setRobots] = useState<{ RobotNo: string }[]>([]);
+  
+  const [filter, setFilter] = useState({
+    robotNo: 'all',
+    startDate: '',
+    endDate: ''
+  });
+
+  const [breakdownForm, setBreakdownForm] = useState({
+    BreakdnNo: '',
+    RobotNo: '',
+    BreakdnDate: '',
+    BreakdnReason: '',
+    BreakdnDesc: '',
+    EmployeeNumber: ''
+  });
+
+  const [repairForm, setRepairForm] = useState({
+    RepairNo: '',
+    BreakdnNo: '',
+    RobotNo: '',
+    RepairDateTime: '',
+    RepairPart: '',
+    RepairCost: '',
+    RepairDesc: ''
+  });
+
+  const fetchRobots = async () => {
+    try {
+      const res = await fetch('/api/robots');
+      const data = await res.json();
+      if (Array.isArray(data)) setRobots(data);
+    } catch (error) {
+      console.error('Failed to fetch robots:', error);
+    }
+  };
+
+  const fetchBreakdowns = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filter.robotNo !== 'all') params.append('robotNo', filter.robotNo);
+      if (filter.startDate) params.append('startDate', filter.startDate);
+      if (filter.endDate) params.append('endDate', filter.endDate);
+
+      const res = await fetch(`/api/maintenance/breakdowns?${params.toString()}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setBreakdowns(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch breakdowns:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRepairs = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/maintenance/repairs');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setRepairs(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch repairs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRobots();
+    fetchBreakdowns();
+    fetchRepairs();
+  }, []);
+
+  // 탭 변경 시 데이터 새로고침
+  useEffect(() => {
+    if (activeTab === 'breakdown') fetchBreakdowns();
+    else fetchRepairs();
+  }, [activeTab]);
+
+  const handleBreakdownInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setBreakdownForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRepairInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setRepairForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNewBreakdown = async () => {
+    const requiredFields = ['BreakdnNo', 'RobotNo', 'BreakdnDate', 'BreakdnDesc', 'EmployeeNumber'];
+    if (!requiredFields.every(f => breakdownForm[f as keyof typeof breakdownForm]?.trim())) {
+      alert('항목을 모두 입력해 주세요.'); return;
+    }
+    try {
+      const res = await fetch('/api/maintenance/breakdowns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(breakdownForm)
+      });
+      if (res.ok) {
+        alert('등록되었습니다.');
+        setBreakdownForm({ BreakdnNo: '', RobotNo: '', BreakdnDate: '', BreakdnReason: '', BreakdnDesc: '', EmployeeNumber: '' });
+        fetchBreakdowns();
+      } else {
+        const err = await res.json();
+        alert(err.error || '등록 실패');
+      }
+    } catch (error) { console.error(error); }
+  };
+
+  const handleSaveBreakdown = async () => {
+    const requiredFields = ['BreakdnNo', 'RobotNo', 'BreakdnDate', 'BreakdnDesc', 'EmployeeNumber'];
+    if (!requiredFields.every(f => breakdownForm[f as keyof typeof breakdownForm]?.trim())) {
+      alert('항목을 모두 입력해 주세요.'); return;
+    }
+    try {
+      const res = await fetch('/api/maintenance/breakdowns', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(breakdownForm)
+      });
+      if (res.ok) { alert('수정되었습니다.'); fetchBreakdowns(); }
+    } catch (error) { console.error(error); }
+  };
+
+  const handleNewRepair = async () => {
+    const requiredFields = ['RepairNo', 'BreakdnNo', 'RobotNo', 'RepairDateTime', 'RepairPart'];
+    if (!requiredFields.every(f => repairForm[f as keyof typeof repairForm]?.trim())) {
+      alert('항목을 모두 입력해 주세요.'); return;
+    }
+    try {
+      const res = await fetch('/api/maintenance/repairs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(repairForm)
+      });
+      if (res.ok) {
+        alert('등록되었습니다.');
+        setRepairForm({ RepairNo: '', BreakdnNo: '', RobotNo: '', RepairDateTime: '', RepairPart: '', RepairCost: '', RepairDesc: '' });
+        fetchRepairs();
+      } else {
+        const err = await res.json();
+        alert(err.error || '등록 실패');
+      }
+    } catch (error) { console.error(error); }
+  };
+
+  const handleSaveRepair = async () => {
+    const requiredFields = ['RepairNo', 'BreakdnNo', 'RobotNo', 'RepairDateTime', 'RepairPart'];
+    if (!requiredFields.every(f => repairForm[f as keyof typeof repairForm]?.trim())) {
+      alert('항목을 모두 입력해 주세요.'); return;
+    }
+    try {
+      const res = await fetch('/api/maintenance/repairs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(repairForm)
+      });
+      if (res.ok) { alert('수정되었습니다.'); fetchRepairs(); }
+      else {
+        const err = await res.json();
+        alert(err.error || '수정 실패');
+      }
+    } catch (error) { console.error(error); }
+  };
+
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0f172a]">
-      {/* 상단 브레드크럼 */}
       <div className="px-6 py-2 border-b border-white/5 flex items-center gap-2">
         <span className="text-[11px] font-medium text-white/50">자동화 장비 자산 관리</span>
         <span className="text-[11px] text-white/30">&gt;</span>
@@ -33,125 +221,148 @@ export default function MalfunctionHistoryPage() {
       </div>
 
       <div className="flex-1 p-6 space-y-4 overflow-hidden flex flex-col">
-        {/* 헤더 및 버튼 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-white tracking-tight">고장/수리이력 관리</h2>
-            <div className="flex items-center gap-1.5 bg-red-500/10 px-2 py-1 rounded border border-red-500/20">
-              <AlertCircle size={14} className="text-red-400" />
-              <span className="text-[11px] text-red-400 font-medium">실시간 고장 접수 2건</span>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col space-y-4">
+          <div className="flex items-center justify-between">
+            <TabsList className="bg-slate-800 border border-white/10 p-1 h-10">
+              <TabsTrigger value="breakdown" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs gap-2 px-6 h-8">
+                <History size={14} /> 고장 이력 관리
+              </TabsTrigger>
+              <TabsTrigger value="repair" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white text-xs gap-2 px-6 h-8">
+                <Wrench size={14} /> 수리 이력 관리
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={() => activeTab === 'breakdown' ? fetchBreakdowns() : fetchRepairs()}>
+                <Search className="w-3.5 h-3.5 mr-1" /> 검색
+              </Button>
+              <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={() => activeTab === 'breakdown' ? handleNewBreakdown() : handleNewRepair()}>
+                <Plus className="w-3.5 h-3.5 mr-1" /> 신규
+              </Button>
+              <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={() => activeTab === 'breakdown' ? handleSaveBreakdown() : handleSaveRepair()}>
+                <Save className="w-3.5 h-3.5 mr-1" /> 저장
+              </Button>
+              <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4">
+                <Download className="w-3.5 h-3.5 mr-1" /> 리포트
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4">
-              <Search className="w-3.5 h-3.5 mr-1" /> 검색
-            </Button>
-            <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4">
-              <Plus className="w-3.5 h-3.5 mr-1" /> 신규
-            </Button>
-            <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4">
-              <Save className="w-3.5 h-3.5 mr-1" /> 저장
-            </Button>
-            <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4">
-              <Download className="w-3.5 h-3.5 mr-1" /> 리포트
-            </Button>
-          </div>
-        </div>
 
-        {/* 검색 필터 */}
-        <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 grid grid-cols-4 gap-y-4 gap-x-8">
-          <div className="flex items-center gap-3">
-            <Label className="text-xs text-slate-300 w-20 shrink-0">장비번호</Label>
-            <Select defaultValue="all">
-              <SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs">
-                <SelectValue placeholder="장비 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="10">10호기</SelectItem>
-                <SelectItem value="1">1호기</SelectItem>
-                <SelectItem value="6">6호기</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-3">
-            <Label className="text-xs text-slate-300 w-20 shrink-0">구분</Label>
-            <Select defaultValue="all">
-              <SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs">
-                <SelectValue placeholder="구분 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="error">고장</SelectItem>
-                <SelectItem value="check">정기점검</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-3">
-            <Label className="text-xs text-slate-300 w-20 shrink-0">상태</Label>
-            <Select defaultValue="all">
-              <SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs">
-                <SelectValue placeholder="상태 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="done">조치완료</SelectItem>
-                <SelectItem value="ing">진행중</SelectItem>
-                <SelectItem value="ready">대기</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-3">
-            <Label className="text-xs text-slate-300 w-20 shrink-0">기간</Label>
-            <Input type="month" className="h-8 bg-slate-900 border-white/10 text-xs" defaultValue="2025-01" />
-          </div>
-        </div>
+          <TabsContent value="breakdown" className="flex-1 flex flex-col space-y-4 m-0 overflow-hidden">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 space-y-3">
+                <h3 className="text-xs font-bold text-blue-400 mb-2">고장 이력 입력/수정</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">고장번호</Label><Input name="BreakdnNo" value={breakdownForm.BreakdnNo} onChange={handleBreakdownInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">로봇번호</Label>
+                    <Select value={breakdownForm.RobotNo} onValueChange={(val) => setBreakdownForm(p => ({...p, RobotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs"><SelectValue placeholder="선택" /></SelectTrigger><SelectContent>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
+                  </div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">고장일자</Label><Input name="BreakdnDate" type="date" value={breakdownForm.BreakdnDate} onChange={handleBreakdownInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">사번</Label><Input name="EmployeeNumber" value={breakdownForm.EmployeeNumber} onChange={handleBreakdownInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
+                </div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">고장사유</Label><Input name="BreakdnReason" value={breakdownForm.BreakdnReason || ''} onChange={handleBreakdownInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">고장내용</Label><Input name="BreakdnDesc" value={breakdownForm.BreakdnDesc} onChange={handleBreakdownInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+              </div>
+              <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 space-y-3">
+                <h3 className="text-xs font-bold text-teal-400 mb-2">조회 필터</h3>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">장비번호</Label>
+                  <Select value={filter.robotNo} onValueChange={(val) => setFilter(p => ({...p, robotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs"><SelectValue placeholder="전체" /></SelectTrigger><SelectContent><SelectItem value="all">전체</SelectItem>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
+                </div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(시작)</Label><Input type="date" value={filter.startDate} onChange={(e) => setFilter(p => ({...p, startDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(종료)</Label><Input type="date" value={filter.endDate} onChange={(e) => setFilter(p => ({...p, endDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+              </div>
+            </div>
 
-        {/* 이력 테이블 */}
-        <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col">
-          <div className="flex-1 overflow-auto">
-            <Table className="text-[11px]">
-              <TableHeader className="bg-blue-600 sticky top-0 z-10">
-                <TableRow className="border-white/10 hover:bg-blue-600">
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10 w-16">No</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">장비번호</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">구분</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">고장/점검 내용</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">수리/조치 내용</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">일자</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">작업자</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9">상태</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {HISTORY.map((item, i) => (
-                  <TableRow key={i} className="border-white/5 hover:bg-blue-500/20 cursor-pointer">
-                    <TableCell className="text-center text-slate-400 border-r border-white/5">{i + 1}</TableCell>
-                    <TableCell className="text-center text-white font-bold border-r border-white/5">{item.robotId}</TableCell>
-                    <TableCell className="text-center border-r border-white/5">
-                      <span className={item.type === '고장' ? 'text-red-400' : 'text-blue-400'}>{item.type}</span>
-                    </TableCell>
-                    <TableCell className="text-left text-slate-300 border-r border-white/5 px-4">{item.content}</TableCell>
-                    <TableCell className="text-left text-slate-300 border-r border-white/5 px-4">{item.action}</TableCell>
-                    <TableCell className="text-center text-slate-300 border-r border-white/5">{item.date}</TableCell>
-                    <TableCell className="text-center text-slate-300 border-r border-white/5">{item.worker}</TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] ${
-                        item.status === '조치완료' ? 'bg-green-500/20 text-green-400' :
-                        item.status === '진행중' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-500/20 text-slate-400'
-                      }`}>
-                        {item.status}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="bg-slate-800 p-2 flex justify-center border-t border-white/5">
-            <div className="w-6 h-6 bg-teal-600 flex items-center justify-center text-[10px] text-white rounded">1</div>
-          </div>
-        </div>
+            <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col min-h-0">
+              <div className="flex-1 overflow-auto">
+                {loading ? <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 text-blue-500 animate-spin" /></div> : (
+                  <Table className="text-[11px]">
+                    <TableHeader className="bg-blue-600 sticky top-0 z-10">
+                      <TableRow className="border-white/10">
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10 w-16">고장번호</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">장비번호</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">고장일자</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">고장사유</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">고장내용</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9">사번</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {breakdowns.length > 0 ? breakdowns.map((item) => (
+                        <TableRow key={item.BreakdnNo} className="border-white/5 hover:bg-blue-500/20 cursor-pointer" onClick={() => setBreakdownForm({ BreakdnNo: item.BreakdnNo, RobotNo: item.RobotNo, BreakdnDate: item.BreakdnDate, BreakdnReason: item.BreakdnReason || '', BreakdnDesc: item.BreakdnDesc, EmployeeNumber: item.EmployeeNumber })}>
+                          <TableCell className="text-center text-white font-bold border-r border-white/5">{item.BreakdnNo}</TableCell>
+                          <TableCell className="text-center text-slate-300 border-r border-white/5">{item.RobotNo}</TableCell>
+                          <TableCell className="text-center text-slate-300 border-r border-white/5">{item.BreakdnDate}</TableCell>
+                          <TableCell className="text-left text-slate-300 border-r border-white/5 px-4">{item.BreakdnReason}</TableCell>
+                          <TableCell className="text-left text-slate-300 border-r border-white/5 px-4">{item.BreakdnDesc}</TableCell>
+                          <TableCell className="text-center text-slate-300">{item.EmployeeNumber}</TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow><TableCell colSpan={6} className="text-center py-10 text-slate-500">데이터가 없습니다.</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+              <div className="bg-slate-800 px-4 py-1.5 border-t border-white/5 text-[10px] text-slate-400">Total: {breakdowns.length} records</div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="repair" className="flex-1 flex flex-col space-y-4 m-0 overflow-hidden">
+            <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 space-y-3">
+              <h3 className="text-xs font-bold text-teal-400 mb-2">수리 이력 입력/수정</h3>
+              <div className="grid grid-cols-4 gap-3">
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리번호</Label><Input name="RepairNo" value={repairForm.RepairNo} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">고장번호</Label><Input name="BreakdnNo" value={repairForm.BreakdnNo} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">로봇번호</Label>
+                  <Select value={repairForm.RobotNo} onValueChange={(val) => setRepairForm(p => ({...p, RobotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs"><SelectValue placeholder="선택" /></SelectTrigger><SelectContent>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
+                </div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리일시</Label><Input name="RepairDateTime" value={repairForm.RepairDateTime} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리부품</Label><Input name="RepairPart" value={repairForm.RepairPart} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리비용</Label><Input name="RepairCost" value={repairForm.RepairCost || ''} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+              </div>
+              <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리내용</Label><Input name="RepairDesc" value={repairForm.RepairDesc || ''} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+            </div>
+
+            <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col min-h-0">
+              <div className="flex-1 overflow-auto">
+                {loading ? <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 text-teal-500 animate-spin" /></div> : (
+                  <Table className="text-[11px]">
+                    <TableHeader className="bg-teal-700 sticky top-0 z-10">
+                      <TableRow className="border-white/10">
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10 w-16">수리번호</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">고장번호</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">장비번호</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">수리일시</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">수리부품</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">수리비용</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9">수리내용</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {repairs.length > 0 ? repairs.map((item) => (
+                        <TableRow key={item.RepairNo} className="border-white/5 hover:bg-teal-500/20 cursor-pointer" onClick={() => setRepairForm({ RepairNo: item.RepairNo, BreakdnNo: item.BreakdnNo, RobotNo: item.RobotNo, RepairDateTime: item.RepairDateTime, RepairPart: item.RepairPart, RepairCost: item.RepairCost || '', RepairDesc: item.RepairDesc || '' })}>
+                          <TableCell className="text-center text-white font-bold border-r border-white/5">{item.RepairNo}</TableCell>
+                          <TableCell className="text-center text-slate-300 border-r border-white/5">{item.BreakdnNo}</TableCell>
+                          <TableCell className="text-center text-slate-300 border-r border-white/5">{item.RobotNo}</TableCell>
+                          <TableCell className="text-center text-slate-300 border-r border-white/5">{item.RepairDateTime}</TableCell>
+                          <TableCell className="text-left text-slate-300 border-r border-white/5 px-4">{item.RepairPart}</TableCell>
+                          <TableCell className="text-right text-slate-300 border-r border-white/5 px-4">{item.RepairCost}</TableCell>
+                          <TableCell className="text-left text-slate-300 px-4">{item.RepairDesc}</TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow><TableCell colSpan={7} className="text-center py-10 text-slate-500">데이터가 없습니다.</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+              <div className="bg-slate-800 px-4 py-1.5 border-t border-white/5 text-[10px] text-slate-400">Total: {repairs.length} records</div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
