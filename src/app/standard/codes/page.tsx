@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -13,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Download, Save, Trash2, Plus, Search, Loader2, RotateCcw, ChevronRight, List } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Code {
   codeId: string;
@@ -22,6 +22,8 @@ interface Code {
   codeName: string;
   remarks1: string;
   remarks2: string;
+  isNew?: boolean;
+  isModified?: boolean;
 }
 
 interface CodeGroup {
@@ -36,11 +38,11 @@ export default function CodeManagementPage() {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Fetch both in parallel
       const [codesRes, groupsRes] = await Promise.all([
         fetch('/api/codes'),
         fetch('/api/codes/groups')
@@ -55,13 +57,17 @@ export default function CodeManagementPage() {
       
       if (Array.isArray(groupsData)) {
         setGroups(groupsData);
-        // 기본으로 첫 번째 그룹 선택 (groupCode 기준)
         if (groupsData.length > 0 && !selectedGroup) {
           setSelectedGroup(groupsData[0].groupCode);
         }
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      toast({
+        variant: "destructive",
+        title: "데이터 로드 실패",
+        description: "코드 정보를 가져오는 중 오류가 발생했습니다.",
+      });
     } finally {
       setLoading(false);
     }
@@ -70,6 +76,99 @@ export default function CodeManagementPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleInputChange = (codeId: string, field: keyof Code, value: string) => {
+    setAllCodes(prev => prev.map(code => 
+      code.codeId === codeId ? { ...code, [field]: value, isModified: !code.isNew } : code
+    ));
+  };
+
+  const handleAddRow = () => {
+    if (!selectedGroup) {
+      toast({
+        title: "그룹 선택 필요",
+        description: "먼저 코드 그룹을 선택해주세요.",
+      });
+      return;
+    }
+
+    const selectedGroupData = groups.find(g => g.groupCode === selectedGroup);
+    
+    const newCode: Code = {
+      codeId: `TEMP_${Date.now()}`,
+      codeType: '공통',
+      groupName: selectedGroupData?.groupName || '',
+      groupCode: selectedGroup,
+      codeName: '',
+      remarks1: '',
+      remarks2: '',
+      isNew: true
+    };
+
+    setAllCodes(prev => [...prev, newCode]);
+  };
+
+  const handleDeleteRow = async (codeId: string, isNew?: boolean) => {
+    if (isNew) {
+      setAllCodes(prev => prev.filter(c => c.codeId !== codeId));
+      return;
+    }
+
+    if (!confirm('정말로 이 코드를 삭제하시겠습니까?')) return;
+
+    try {
+      const res = await fetch(`/api/codes?id=${codeId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setAllCodes(prev => prev.filter(c => c.codeId !== codeId));
+        toast({ title: "삭제 성공", description: "코드가 삭제되었습니다." });
+        // Update group count locally
+        setGroups(prev => prev.map(g => g.groupCode === selectedGroup ? { ...g, count: g.count - 1 } : g));
+      } else {
+        throw new Error('Failed to delete');
+      }
+    } catch (error) {
+      toast({ variant: "destructive", title: "삭제 실패", description: "코드 삭제 중 오류가 발생했습니다." });
+    }
+  };
+
+  const handleSaveAll = async () => {
+    const modifiedCodes = allCodes.filter(c => c.isNew || c.isModified);
+    if (modifiedCodes.length === 0) {
+      toast({ title: "저장할 내용 없음", description: "수정된 내용이 없습니다." });
+      return;
+    }
+
+    setLoading(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const code of modifiedCodes) {
+      try {
+        const method = code.isNew ? 'POST' : 'PUT';
+        const res = await fetch('/api/codes', {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(code)
+        });
+
+        if (res.ok) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (error) {
+        failCount++;
+      }
+    }
+
+    await fetchData(); // Refresh data
+    setLoading(false);
+
+    toast({
+      title: "저장 완료",
+      description: `성공: ${successCount}건${failCount > 0 ? `, 실패: ${failCount}건` : ''}`,
+    });
+  };
 
   const filteredCodes = allCodes.filter(code => {
     const matchesGroup = selectedGroup ? code.groupCode === selectedGroup : true;
@@ -140,11 +239,12 @@ export default function CodeManagementPage() {
               <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={fetchData}>
                 <RotateCcw className="w-3.5 h-3.5 mr-1" /> 새로고침
               </Button>
-              <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4">
+              <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={handleAddRow}>
                 <Plus className="w-3.5 h-3.5 mr-1" /> 신규
               </Button>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs px-6">
-                <Save className="w-3.5 h-3.5 mr-1" /> 전체 저장
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs px-6" onClick={handleSaveAll} disabled={loading}>
+                {loading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1" />}
+                전체 저장
               </Button>
             </div>
           </div>
@@ -172,7 +272,7 @@ export default function CodeManagementPage() {
           {/* 상세 테이블 */}
           <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col shadow-2xl">
             <div className="flex-1 overflow-auto">
-              {loading ? (
+              {loading && allCodes.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
                 </div>
@@ -182,23 +282,50 @@ export default function CodeManagementPage() {
                     <TableRow className="border-white/10 hover:bg-blue-700">
                       <TableHead className="text-white text-center font-bold h-10 border-r border-white/10 w-16">ID</TableHead>
                       <TableHead className="text-white text-center font-bold h-10 border-r border-white/10">코드 구분 (Name)</TableHead>
-                      <TableHead className="text-white text-center font-bold h-10 border-r border-white/10">비고 1 (Group)</TableHead>
-                      <TableHead className="text-white text-center font-bold h-10 border-r border-white/10">그룹 명 (Remarks1)</TableHead>
-                      <TableHead className="text-white text-center font-bold h-10 border-r border-white/10">비고 2 (Order)</TableHead>
+                      <TableHead className="text-white text-center font-bold h-10 border-r border-white/10">그룹 명 (GroupName)</TableHead>
+                      <TableHead className="text-white text-center font-bold h-10 border-r border-white/10">비고 1 (Remarks1)</TableHead>
+                      <TableHead className="text-white text-center font-bold h-10 border-r border-white/10">비고 2 (Remarks2)</TableHead>
                       <TableHead className="text-white text-center font-bold h-10 w-20">관리</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCodes.length > 0 ? (
                       filteredCodes.map((code) => (
-                        <TableRow key={code.codeId} className="border-white/5 hover:bg-blue-500/10 transition-colors">
-                          <TableCell className="text-center text-slate-500 border-r border-white/5">{code.codeId}</TableCell>
-                          <TableCell className="text-center text-white font-bold border-r border-white/5 bg-white/5">{code.codeName}</TableCell>
-                          <TableCell className="text-center text-slate-300 border-r border-white/5">{code.groupName}</TableCell>
-                          <TableCell className="text-center text-slate-300 border-r border-white/5">{code.remarks1}</TableCell>
-                          <TableCell className="text-center text-slate-400 border-r border-white/5">{code.remarks2}</TableCell>
+                        <TableRow key={code.codeId} className={`border-white/5 transition-colors ${code.isNew ? 'bg-green-500/10' : code.isModified ? 'bg-blue-500/10' : 'hover:bg-white/5'}`}>
+                          <TableCell className="text-center text-slate-500 border-r border-white/5">
+                            {code.isNew ? '*' : code.codeId}
+                          </TableCell>
+                          <TableCell className="p-0 border-r border-white/5">
+                            <Input 
+                              value={code.codeName}
+                              onChange={(e) => handleInputChange(code.codeId, 'codeName', e.target.value)}
+                              className="h-10 bg-transparent border-none text-center text-white focus:ring-1 focus:ring-blue-500 rounded-none text-[11px]"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center text-slate-300 border-r border-white/5">
+                            {code.groupName}
+                          </TableCell>
+                          <TableCell className="p-0 border-r border-white/5">
+                            <Input 
+                              value={code.remarks1}
+                              onChange={(e) => handleInputChange(code.codeId, 'remarks1', e.target.value)}
+                              className="h-10 bg-transparent border-none text-center text-slate-300 focus:ring-1 focus:ring-blue-500 rounded-none text-[11px]"
+                            />
+                          </TableCell>
+                          <TableCell className="p-0 border-r border-white/5">
+                            <Input 
+                              value={code.remarks2}
+                              onChange={(e) => handleInputChange(code.codeId, 'remarks2', e.target.value)}
+                              className="h-10 bg-transparent border-none text-center text-slate-400 focus:ring-1 focus:ring-blue-500 rounded-none text-[11px]"
+                            />
+                          </TableCell>
                           <TableCell className="text-center">
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 hover:text-red-400">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6 text-slate-500 hover:text-red-400"
+                              onClick={() => handleDeleteRow(code.codeId, code.isNew)}
+                            >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </TableCell>

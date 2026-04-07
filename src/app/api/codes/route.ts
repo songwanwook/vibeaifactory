@@ -44,3 +44,62 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Failed to fetch codes' }, { status: 500 })
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { codeType, groupName, groupCode, codeName, remarks1, remarks2 } = body
+
+    // Get max CodeID
+    const [maxResult]: any = await pool.query('SELECT MAX(CAST(CodeID AS UNSIGNED)) as maxId FROM code_tbl')
+    const nextId = (maxResult[0].maxId || 0) + 1
+
+    const query = `
+      INSERT INTO code_tbl (CodeID, CodeType, GroupName, GroupCode, CodeName, Remarks1, Remarks2)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `
+    await pool.query(query, [String(nextId), codeType || '공통', groupName, groupCode, codeName, remarks1 || '', remarks2 || ''])
+
+    return NextResponse.json({ success: true, codeId: String(nextId) })
+  } catch (error) {
+    console.error('Failed to create code:', error)
+    return NextResponse.json({ error: 'Failed to create code' }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json()
+    const { codeId, codeType, groupName, groupCode, codeName, remarks1, remarks2 } = body
+
+    const query = `
+      UPDATE code_tbl 
+      SET CodeType = ?, GroupName = ?, GroupCode = ?, CodeName = ?, Remarks1 = ?, Remarks2 = ?
+      WHERE CodeID = ?
+    `
+    await pool.query(query, [codeType, groupName, groupCode, codeName, remarks1, remarks2, codeId])
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Failed to update code:', error)
+    return NextResponse.json({ error: 'Failed to update code' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const codeId = searchParams.get('id')
+
+    if (!codeId) {
+      return NextResponse.json({ error: 'CodeID is required' }, { status: 400 })
+    }
+
+    await pool.query('DELETE FROM code_tbl WHERE CodeID = ?', [codeId])
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Failed to delete code:', error)
+    return NextResponse.json({ error: 'Failed to delete code' }, { status: 500 })
+  }
+}
