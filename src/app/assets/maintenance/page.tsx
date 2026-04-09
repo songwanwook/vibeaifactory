@@ -88,9 +88,17 @@ export default function MalfunctionHistoryPage() {
       console.log(`[Frontend] Fetching breakdowns with params: ${params.toString()}`);
       const res = await fetch(`/api/maintenance/breakdowns?${params.toString()}`, { cache: 'no-store' });
       const data = await res.json();
-      console.log(`[Frontend] Received ${Array.isArray(data) ? data.length : 0} breakdowns`);
+      
       if (Array.isArray(data)) {
-        setBreakdowns(data);
+        // 데이터 정규화: 날짜 형식 통일
+        const normalized = data.map(item => ({
+          ...item,
+          BreakdnDate: item.BreakdnDate && typeof item.BreakdnDate === 'string' 
+            ? item.BreakdnDate.split('T')[0] 
+            : item.BreakdnDate
+        }));
+        console.log(`[Frontend] Normalized ${normalized.length} breakdowns`);
+        setBreakdowns(normalized);
       }
     } catch (error) {
       console.error('Failed to fetch breakdowns:', error);
@@ -104,9 +112,17 @@ export default function MalfunctionHistoryPage() {
       setLoading(true);
       const res = await fetch('/api/maintenance/repairs', { cache: 'no-store' });
       const data = await res.json();
-      console.log(`[Frontend] Received ${Array.isArray(data) ? data.length : 0} repairs`);
+      
       if (Array.isArray(data)) {
-        setRepairs(data);
+        // 데이터 정규화: 날짜 형식 통일
+        const normalized = data.map(item => ({
+          ...item,
+          RepairDateTime: item.RepairDateTime && typeof item.RepairDateTime === 'string' 
+            ? item.RepairDateTime.split('T')[0] 
+            : item.RepairDateTime
+        }));
+        console.log(`[Frontend] Normalized ${normalized.length} repairs`);
+        setRepairs(normalized);
       }
     } catch (error) {
       console.error('Failed to fetch repairs:', error);

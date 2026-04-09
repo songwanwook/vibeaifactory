@@ -11,15 +11,15 @@ export async function GET(request: Request) {
     let query = 'SELECT * FROM breakdn_tbl WHERE 1=1'
     const params: any[] = []
 
-    if (robotNo && robotNo !== 'all') {
+    if (robotNo && robotNo !== 'all' && robotNo.trim() !== '') {
       query += ' AND RobotNo = ?'
       params.push(robotNo)
     }
-    if (startDate) {
+    if (startDate && startDate.trim() !== '') {
       query += ' AND BreakdnDate >= ?'
       params.push(startDate)
     }
-    if (endDate) {
+    if (endDate && endDate.trim() !== '') {
       query += ' AND BreakdnDate <= ?'
       params.push(endDate)
     }
