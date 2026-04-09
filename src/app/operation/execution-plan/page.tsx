@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
@@ -28,6 +29,7 @@ interface PlanData {
 export default function ExecutionPlanPage() {
   const [data, setData] = useState<PlanData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAllDates, setShowAllDates] = useState(false);
   const [filters, setFilters] = useState({
     month: '2025-06',
     process: 'all'
@@ -36,7 +38,11 @@ export default function ExecutionPlanPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams(filters);
+      const queryParams = {
+        ...filters,
+        month: showAllDates ? '' : filters.month
+      };
+      const params = new URLSearchParams(queryParams);
       const res = await fetch(`/api/operation/execution-plan?${params.toString()}`);
       const result = await res.json();
       if (Array.isArray(result)) {
@@ -85,10 +91,20 @@ export default function ExecutionPlanPage() {
             <Label className="text-xs font-bold text-slate-300 shrink-0">계획월</Label>
             <Input 
               type="month" 
-              className="h-8 bg-cyan-400/10 border-cyan-400/30 text-xs text-white" 
+              className="h-8 bg-cyan-400/10 border-cyan-400/30 text-xs text-white disabled:opacity-50" 
               value={filters.month}
               onChange={(e) => setFilters(prev => ({ ...prev, month: e.target.value }))}
+              disabled={showAllDates}
             />
+            <div className="flex items-center gap-2 ml-2 shrink-0">
+              <Checkbox 
+                id="all-dates" 
+                checked={showAllDates}
+                onCheckedChange={(checked) => setShowAllDates(!!checked)}
+                className="border-slate-500"
+              />
+              <label htmlFor="all-dates" className="text-[11px] text-slate-400 cursor-pointer select-none whitespace-nowrap">전체 일자</label>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Label className="text-xs font-bold text-slate-300 shrink-0">공정구분</Label>
