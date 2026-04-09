@@ -85,8 +85,9 @@ export default function MalfunctionHistoryPage() {
       if (filter.startDate) params.append('startDate', filter.startDate);
       if (filter.endDate) params.append('endDate', filter.endDate);
 
-      const res = await fetch(`/api/maintenance/breakdowns?${params.toString()}`);
+      const res = await fetch(`/api/maintenance/breakdowns?${params.toString()}`, { cache: 'no-store' });
       const data = await res.json();
+      console.log(`[Frontend] Received ${data.length} breakdowns`);
       if (Array.isArray(data)) {
         setBreakdowns(data);
       }
@@ -100,8 +101,9 @@ export default function MalfunctionHistoryPage() {
   const fetchRepairs = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/maintenance/repairs');
+      const res = await fetch('/api/maintenance/repairs', { cache: 'no-store' });
       const data = await res.json();
+      console.log(`[Frontend] Received ${data.length} repairs`);
       if (Array.isArray(data)) {
         setRepairs(data);
       }
@@ -114,15 +116,12 @@ export default function MalfunctionHistoryPage() {
 
   useEffect(() => {
     fetchRobots();
-    fetchBreakdowns();
-    fetchRepairs();
   }, []);
 
-  // 탭 변경 시 데이터 새로고침
   useEffect(() => {
     if (activeTab === 'breakdown') fetchBreakdowns();
     else fetchRepairs();
-  }, [activeTab]);
+  }, [activeTab, filter.robotNo, filter.startDate, filter.endDate]);
 
   const handleBreakdownInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

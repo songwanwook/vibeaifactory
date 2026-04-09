@@ -27,6 +27,7 @@ export async function GET(request: Request) {
     query += ' ORDER BY BreakdnDate DESC, CAST(BreakdnNo AS UNSIGNED) DESC'
 
     const [rows]: any = await pool.query(query, params)
+    console.log(`[API] Fetched ${rows.length} breakdowns`);
     return NextResponse.json(rows)
   } catch (error) {
     console.error('Failed to fetch breakdowns:', error)
