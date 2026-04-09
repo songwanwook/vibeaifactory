@@ -329,35 +329,42 @@ export default function MalfunctionHistoryPage() {
           </TabsContent>
 
           <TabsContent value="repair" className="flex-1 flex flex-col space-y-4 m-0 overflow-hidden">
-            <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 space-y-3">
-              <h3 className="text-xs font-bold text-teal-400 mb-2">수리 이력 입력/수정</h3>
-              <div className="grid grid-cols-4 gap-3">
-                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리번호</Label><Input name="RepairNo" value={repairForm.RepairNo} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
-                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">고장번호</Label><Input name="BreakdnNo" value={repairForm.BreakdnNo} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
-                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">로봇번호</Label>
-                  <Select value={repairForm.RobotNo} onValueChange={(val) => setRepairForm(p => ({...p, RobotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs"><SelectValue placeholder="선택" /></SelectTrigger><SelectContent>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 space-y-3">
+                <h3 className="text-xs font-bold text-teal-400 mb-2">수리 이력 입력/수정</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리번호</Label><Input name="RepairNo" value={repairForm.RepairNo} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">고장번호</Label><Input name="BreakdnNo" value={repairForm.BreakdnNo} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">로봇번호</Label>
+                    <Select value={repairForm.RobotNo} onValueChange={(val) => setRepairForm(p => ({...p, RobotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs flex-1"><SelectValue placeholder="선택" /></SelectTrigger><SelectContent>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
+                  </div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리일시</Label><Input name="RepairDateTime" value={repairForm.RepairDateTime} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
                 </div>
-                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리일시</Label><Input name="RepairDateTime" value={repairForm.RepairDateTime} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리부품</Label><Input name="RepairPart" value={repairForm.RepairPart} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
-                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리비용</Label><Input name="RepairCost" value={repairForm.RepairCost || ''} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리내용</Label><Input name="RepairDesc" value={repairForm.RepairDesc || ''} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
               </div>
-              <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리내용</Label><Input name="RepairDesc" value={repairForm.RepairDesc || ''} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+              <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 space-y-3">
+                <h3 className="text-xs font-bold text-teal-400 mb-2">조회 필터</h3>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">장비번호</Label>
+                  <Select value={filter.robotNo} onValueChange={(val) => setFilter(p => ({...p, robotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs flex-1"><SelectValue placeholder="전체" /></SelectTrigger><SelectContent><SelectItem value="all">전체</SelectItem>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
+                </div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(시작)</Label><Input type="date" value={filter.startDate} onChange={(e) => setFilter(p => ({...p, startDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+                <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(종료)</Label><Input type="date" value={filter.endDate} onChange={(e) => setFilter(p => ({...p, endDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+              </div>
             </div>
 
             <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col min-h-0">
               <div className="flex-1 overflow-auto">
                 {loading ? <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 text-teal-500 animate-spin" /></div> : (
-                  <Table className="text-[11px]">
-                    <TableHeader className="bg-teal-700 sticky top-0 z-10">
+                  <Table className="text-[11px] w-full">
+                    <TableHeader className="bg-teal-700 sticky top-0 z-10 shadow-md">
                       <TableRow className="border-white/10">
-                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10 w-16">수리번호</TableHead>
-                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">고장번호</TableHead>
-                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">장비번호</TableHead>
-                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">수리일시</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10 w-20">수리번호</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10 w-20">고장번호</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10 w-24">장비번호</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10 w-32">수리일시</TableHead>
                         <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">수리부품</TableHead>
-                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">수리비용</TableHead>
+                        <TableHead className="text-white text-center font-bold h-9 border-r border-white/10 w-24">수리비용</TableHead>
                         <TableHead className="text-white text-center font-bold h-9">수리내용</TableHead>
                       </TableRow>
                     </TableHeader>
