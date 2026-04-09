@@ -233,7 +233,7 @@ export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: 
             return (
               <div key={i} className={cn(
                 "border-r border-b border-white/5 pt-7 pb-1 relative group hover:bg-white/5 transition-colors",
-                viewType === 'monthly' ? "min-h-[100px]" : "min-h-[400px]",
+                viewType === 'monthly' ? "min-h-[100px]" : "min-h-[300px]",
                 viewType === 'monthly' && !isSelectedMonth ? "bg-[#1e293b] text-muted-foreground" : "text-white"
               )}>
                 <span className={cn(
@@ -260,7 +260,7 @@ export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: 
                         onClick={() => setSelectedEvent(event)}
                         className={cn(
                           "h-6 text-[11px] px-2 flex items-center text-white shadow-sm relative overflow-visible cursor-pointer hover:brightness-110 active:scale-[0.98] transition-all",
-                          viewType === 'monthly' ? (
+                          viewType === 'monthly' || viewType === 'weekly' ? (
                             cn(
                               isStart ? "ml-1 rounded-l-sm" : "-ml-[1px] border-l-0 rounded-l-none",
                               isEnd ? "mr-1 rounded-r-sm" : "-mr-[1px] border-r-0 rounded-r-none",
@@ -277,7 +277,8 @@ export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: 
                             {viewType === 'daily' && !event.all_day && ` [${format(start, "HH:mm")} - ${format(end, "HH:mm")}]`}
                           </span>
                         )}
-                        {!isStart && !showTitle && viewType !== 'monthly' && <span className="text-[9px] opacity-70 ml-1 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none">(계속)</span>}
+                        {!isStart && !showTitle && (viewType === 'monthly' || viewType === 'weekly') && <span className="sr-only">(계속)</span>}
+                        {!isStart && !showTitle && viewType === 'daily' && <span className="text-[9px] opacity-70 ml-1 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none">(계속)</span>}
                       </div>
                     )
                   })}
