@@ -231,18 +231,18 @@ export function ProductionCalendar({ filterType }: ProductionCalendarProps) {
 
             return (
               <div key={i} className={cn(
-                "border-r border-b border-white/5 pt-1 relative group hover:bg-white/5 transition-colors",
+                "border-r border-b border-white/5 pt-7 pb-1 relative group hover:bg-white/5 transition-colors",
                 viewType === 'monthly' ? "min-h-[100px]" : "min-h-[400px]",
                 viewType === 'monthly' && !isSelectedMonth ? "bg-[#1e293b] text-muted-foreground" : "text-white"
               )}>
                 <span className={cn(
-                  "text-xs font-medium ml-2",
+                  "text-[10px] font-bold absolute top-1.5 right-2 z-30",
                   day.getDay() === 0 && (viewType !== 'monthly' || isSelectedMonth) ? "text-red-400" : ""
                 )}>
                   {viewType === 'daily' ? format(day, "M월 d일 (EEEE)", { locale: ko }) : `${format(day, "d")}일`}
                 </span>
                 
-                <div className="mt-2 space-y-1">
+                <div className="space-y-1">
                   {dayEventsBySlot.map((event, slotIndex) => {
                     if (!event) return <div key={`empty-${slotIndex}`} className="h-6" />;
 
