@@ -8,7 +8,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-export function ControlPanel() {
+interface ControlPanelProps {
+  filterType: 'all' | 'production' | 'other';
+  onFilterChange: (value: 'all' | 'production' | 'other') => void;
+}
+
+export function ControlPanel({ filterType, onFilterChange }: ControlPanelProps) {
   return (
     <Card className="bg-[#1a2130] border-none shadow-xl w-64 shrink-0 rounded-none h-full border-r border-white/5">
       <CardContent className="p-4 space-y-6">
@@ -68,7 +73,15 @@ export function ControlPanel() {
 
         <div className="space-y-4 pt-6 border-t border-white/5">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">업무 구분</h4>
-          <RadioGroup defaultValue="production" className="space-y-3">
+          <RadioGroup 
+            value={filterType} 
+            onValueChange={(value) => onFilterChange(value as any)} 
+            className="space-y-3"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="all" id="all" className="border-white/40 text-white" />
+              <Label htmlFor="all" className="text-sm text-white/90">전체 (All)</Label>
+            </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="production" id="production" className="border-yellow-400 text-yellow-400" />
               <Label htmlFor="production" className="text-sm text-white/90">생산 공정 (Production)</Label>

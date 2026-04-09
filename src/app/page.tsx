@@ -1,10 +1,13 @@
 "use client"
 
+import React, { useState } from 'react'
 import { ControlPanel } from "@/components/dashboard/ControlPanel"
 import { ProductionCalendar } from "@/components/dashboard/ProductionCalendar"
 import { KPISidebar } from "@/components/dashboard/KPISidebar"
 
 export default function DashboardPage() {
+  const [filterType, setFilterType] = useState<'all' | 'production' | 'other'>('all');
+
   return (
     <div className="flex flex-col h-full">
       {/* Header Info */}
@@ -16,11 +19,11 @@ export default function DashboardPage() {
       {/* Main Dashboard Content Area */}
       <div className="flex-1 flex overflow-hidden border border-white/10 shadow-2xl rounded-lg">
         {/* Left: Control Panel (Already completed/Submenu concept) */}
-        <ControlPanel />
+        <ControlPanel filterType={filterType} onFilterChange={setFilterType} />
         
         {/* Center: Calendar (Requested) */}
         <div className="flex-1 flex flex-col overflow-hidden bg-[#2d3748]">
-          <ProductionCalendar />
+          <ProductionCalendar filterType={filterType} />
           
           {/* Footer Copyright */}
           <footer className="py-4 text-center border-t border-white/5 bg-[#1a2130]">
