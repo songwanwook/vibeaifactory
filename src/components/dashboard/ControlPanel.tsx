@@ -11,9 +11,10 @@ import { Input } from "@/components/ui/input"
 interface ControlPanelProps {
   filterType: 'all' | 'production' | 'other';
   onFilterChange: (value: 'all' | 'production' | 'other') => void;
+  onToday?: () => void;
 }
 
-export function ControlPanel({ filterType, onFilterChange }: ControlPanelProps) {
+export function ControlPanel({ filterType, onFilterChange, onToday }: ControlPanelProps) {
   return (
     <Card className="bg-[#1a2130] border-none shadow-xl w-64 shrink-0 rounded-none h-full border-r border-white/5">
       <CardContent className="p-4 space-y-6">
@@ -95,7 +96,13 @@ export function ControlPanel({ filterType, onFilterChange }: ControlPanelProps) 
 
         <div className="flex flex-col gap-2 pt-6">
           <div className="flex gap-2">
-            <Button variant="secondary" className="bg-white/10 text-white flex-1 text-xs h-9 hover:bg-white/20">오늘</Button>
+            <Button 
+              variant="secondary" 
+              className="bg-white/10 text-white flex-1 text-xs h-9 hover:bg-white/20"
+              onClick={onToday}
+            >
+              오늘
+            </Button>
             <Button variant="secondary" className="bg-white/10 text-white flex-1 text-xs h-9 hover:bg-white/20">일정추가</Button>
           </div>
           <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-9">필터 적용</Button>

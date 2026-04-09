@@ -34,10 +34,11 @@ import { ko } from "date-fns/locale"
 
 interface ProductionCalendarProps {
   filterType: 'all' | 'production' | 'other';
+  currentDate: Date;
+  setCurrentDate: (date: Date) => void;
 }
 
-export function ProductionCalendar({ filterType }: ProductionCalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date()); 
+export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: ProductionCalendarProps) {
   const [viewType, setViewType] = useState<'monthly' | 'weekly' | 'daily'>('monthly');
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
@@ -135,10 +136,6 @@ export function ProductionCalendar({ filterType }: ProductionCalendarProps) {
     else setCurrentDate(subDays(currentDate, 1));
   };
 
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
-
   const getFormatString = () => {
     if (viewType === 'monthly') return "yyyy년 M월";
     if (viewType === 'weekly') {
@@ -159,14 +156,6 @@ export function ProductionCalendar({ filterType }: ProductionCalendarProps) {
           <div className="flex items-center gap-1">
             <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/10" onClick={prev}>
               <ChevronLeft size={16} />
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="h-8 px-3 text-[11px] text-white border-white/10 hover:bg-white/10 bg-transparent"
-              onClick={goToToday}
-            >
-              오늘
             </Button>
             <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/10" onClick={next}>
               <ChevronRight size={16} />

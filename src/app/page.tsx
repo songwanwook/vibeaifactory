@@ -7,6 +7,11 @@ import { KPISidebar } from "@/components/dashboard/KPISidebar"
 
 export default function DashboardPage() {
   const [filterType, setFilterType] = useState<'all' | 'production' | 'other'>('all');
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const handleToday = () => {
+    setCurrentDate(new Date());
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -19,11 +24,19 @@ export default function DashboardPage() {
       {/* Main Dashboard Content Area */}
       <div className="flex-1 flex overflow-hidden border border-white/10 shadow-2xl rounded-lg">
         {/* Left: Control Panel (Already completed/Submenu concept) */}
-        <ControlPanel filterType={filterType} onFilterChange={setFilterType} />
+        <ControlPanel 
+          filterType={filterType} 
+          onFilterChange={setFilterType} 
+          onToday={handleToday}
+        />
         
         {/* Center: Calendar (Requested) */}
         <div className="flex-1 flex flex-col overflow-hidden bg-[#2d3748]">
-          <ProductionCalendar filterType={filterType} />
+          <ProductionCalendar 
+            filterType={filterType} 
+            currentDate={currentDate}
+            setCurrentDate={setCurrentDate}
+          />
           
           {/* Footer Copyright */}
           <footer className="py-4 text-center border-t border-white/5 bg-[#1a2130]">
