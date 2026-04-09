@@ -287,8 +287,8 @@ export default function MalfunctionHistoryPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {breakdowns.length > 0 ? breakdowns.map((item) => (
-                        <TableRow key={item.BreakdnNo} className="border-white/5 hover:bg-blue-500/20 cursor-pointer" onClick={() => setBreakdownForm({ BreakdnNo: item.BreakdnNo, RobotNo: item.RobotNo, BreakdnDate: item.BreakdnDate, BreakdnReason: item.BreakdnReason || '', BreakdnDesc: item.BreakdnDesc, EmployeeNumber: item.EmployeeNumber })}>
+                      {breakdowns.length > 0 ? breakdowns.map((item, idx) => (
+                        <TableRow key={`${item.BreakdnNo}-${idx}`} className="border-white/5 hover:bg-blue-500/20 cursor-pointer" onClick={() => setBreakdownForm({ BreakdnNo: item.BreakdnNo, RobotNo: item.RobotNo, BreakdnDate: item.BreakdnDate, BreakdnReason: item.BreakdnReason || '', BreakdnDesc: item.BreakdnDesc, EmployeeNumber: item.EmployeeNumber })}>
                           <TableCell className="text-center text-white font-bold border-r border-white/5">{item.BreakdnNo}</TableCell>
                           <TableCell className="text-center text-slate-300 border-r border-white/5">{item.RobotNo}</TableCell>
                           <TableCell className="text-center text-slate-300 border-r border-white/5">{item.BreakdnDate}</TableCell>
@@ -341,8 +341,8 @@ export default function MalfunctionHistoryPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {repairs.length > 0 ? repairs.map((item) => (
-                        <TableRow key={item.RepairNo} className="border-white/5 hover:bg-teal-500/20 cursor-pointer" onClick={() => setRepairForm({ RepairNo: item.RepairNo, BreakdnNo: item.BreakdnNo, RobotNo: item.RobotNo, RepairDateTime: item.RepairDateTime, RepairPart: item.RepairPart, RepairCost: item.RepairCost || '', RepairDesc: item.RepairDesc || '' })}>
+                      {repairs.length > 0 ? repairs.map((item, idx) => (
+                        <TableRow key={`${item.RepairNo}-${idx}`} className="border-white/5 hover:bg-teal-500/20 cursor-pointer" onClick={() => setRepairForm({ RepairNo: item.RepairNo, BreakdnNo: item.BreakdnNo, RobotNo: item.RobotNo, RepairDateTime: item.RepairDateTime, RepairPart: item.RepairPart, RepairCost: item.RepairCost || '', RepairDesc: item.RepairDesc || '' })}>
                           <TableCell className="text-center text-white font-bold border-r border-white/5">{item.RepairNo}</TableCell>
                           <TableCell className="text-center text-slate-300 border-r border-white/5">{item.BreakdnNo}</TableCell>
                           <TableCell className="text-center text-slate-300 border-r border-white/5">{item.RobotNo}</TableCell>

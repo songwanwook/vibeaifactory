@@ -3,7 +3,7 @@ import pool from '@/lib/db'
 
 export async function GET() {
   try {
-    const query = 'SELECT * FROM repair_tbl ORDER BY RepairDateTime DESC, CAST(RepairNo AS UNSIGNED) DESC'
+    const query = 'SELECT * FROM repair_tbl ORDER BY RepairDateTime DESC, RepairNo DESC'
     const [rows]: any = await pool.query(query)
     return NextResponse.json(rows)
   } catch (error) {

@@ -24,7 +24,7 @@ export async function GET(request: Request) {
       params.push(endDate)
     }
 
-    query += ' ORDER BY BreakdnDate DESC, CAST(BreakdnNo AS UNSIGNED) DESC'
+    query += ' ORDER BY BreakdnDate DESC, BreakdnNo DESC'
 
     const [rows]: any = await pool.query(query, params)
     console.log(`[API] Fetched ${rows.length} breakdowns`);
