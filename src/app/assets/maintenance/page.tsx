@@ -77,17 +77,18 @@ export default function MalfunctionHistoryPage() {
     }
   };
 
-  const fetchBreakdowns = async () => {
+  const fetchBreakdowns = async (currentFilter = filter) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (filter.robotNo !== 'all') params.append('robotNo', filter.robotNo);
-      if (filter.startDate) params.append('startDate', filter.startDate);
-      if (filter.endDate) params.append('endDate', filter.endDate);
+      if (currentFilter.robotNo && currentFilter.robotNo !== 'all') params.append('robotNo', currentFilter.robotNo);
+      if (currentFilter.startDate) params.append('startDate', currentFilter.startDate);
+      if (currentFilter.endDate) params.append('endDate', currentFilter.endDate);
 
+      console.log(`[Frontend] Fetching breakdowns with params: ${params.toString()}`);
       const res = await fetch(`/api/maintenance/breakdowns?${params.toString()}`, { cache: 'no-store' });
       const data = await res.json();
-      console.log(`[Frontend] Received ${data.length} breakdowns`);
+      console.log(`[Frontend] Received ${Array.isArray(data) ? data.length : 0} breakdowns`);
       if (Array.isArray(data)) {
         setBreakdowns(data);
       }
@@ -103,7 +104,7 @@ export default function MalfunctionHistoryPage() {
       setLoading(true);
       const res = await fetch('/api/maintenance/repairs', { cache: 'no-store' });
       const data = await res.json();
-      console.log(`[Frontend] Received ${data.length} repairs`);
+      console.log(`[Frontend] Received ${Array.isArray(data) ? data.length : 0} repairs`);
       if (Array.isArray(data)) {
         setRepairs(data);
       }
@@ -116,12 +117,16 @@ export default function MalfunctionHistoryPage() {
 
   useEffect(() => {
     fetchRobots();
+    // 초기 로딩 시 필터 없이 모든 데이터를 가져오도록 명시적 호출
+    fetchBreakdowns({ robotNo: 'all', startDate: '', endDate: '' });
+    fetchRepairs();
   }, []);
 
+  // 탭 변경 시에만 동기화 (필터 변경은 별도 처리하거나 주석 처리)
   useEffect(() => {
     if (activeTab === 'breakdown') fetchBreakdowns();
     else fetchRepairs();
-  }, [activeTab, filter.robotNo, filter.startDate, filter.endDate]);
+  }, [activeTab]);
 
   const handleBreakdownInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

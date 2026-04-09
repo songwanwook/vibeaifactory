@@ -5,6 +5,7 @@ export async function GET() {
   try {
     const query = 'SELECT * FROM repair_tbl ORDER BY RepairDateTime DESC, RepairNo DESC'
     const [rows]: any = await pool.query(query)
+    console.log(`[API] Fetched ${rows.length} repairs`);
     return NextResponse.json(rows)
   } catch (error) {
     console.error('Failed to fetch repairs:', error)
