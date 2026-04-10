@@ -90,12 +90,16 @@ export default function MalfunctionHistoryPage() {
       const data = await res.json();
       
       if (Array.isArray(data)) {
-        const normalized = data.map(item => ({
-          ...item,
-          BreakdnDate: item.BreakdnDate && typeof item.BreakdnDate === 'string' 
-            ? item.BreakdnDate.split('T')[0] 
-            : item.BreakdnDate
-        }));
+        const normalized = data.map(item => {
+          let cleanDate = item.BreakdnDate;
+          if (cleanDate && typeof cleanDate === 'string') {
+            cleanDate = cleanDate.split('T')[0].split(' ')[0];
+          }
+          return {
+            ...item,
+            BreakdnDate: cleanDate
+          };
+        });
         setBreakdowns(normalized);
       }
     } catch (error) {
@@ -112,12 +116,16 @@ export default function MalfunctionHistoryPage() {
       const data = await res.json();
       
       if (Array.isArray(data)) {
-        const normalized = data.map(item => ({
-          ...item,
-          RepairDateTime: item.RepairDateTime && typeof item.RepairDateTime === 'string' 
-            ? item.RepairDateTime.split('T')[0] 
-            : item.RepairDateTime
-        }));
+        const normalized = data.map(item => {
+          let cleanDate = item.RepairDateTime;
+          if (cleanDate && typeof cleanDate === 'string') {
+            cleanDate = cleanDate.split('T')[0].split(' ')[0];
+          }
+          return {
+            ...item,
+            RepairDateTime: cleanDate
+          };
+        });
         setRepairs(normalized);
       }
     } catch (error) {
