@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     } = body
 
     if (!employeeNumber || !userName) {
-      return NextResponse.json({ error: 'Employee Number and User Name are required' }, { status: 400 })
+      return NextResponse.json({ error: '사번과 성명은 필수 입력 항목입니다.' }, { status: 400 })
     }
 
     const [result]: any = await pool.query(
@@ -88,12 +88,92 @@ export async function POST(request: Request) {
       ]
     )
 
-    return NextResponse.json({ message: 'User created successfully' }, { status: 201 })
+    return NextResponse.json({ message: '사용자가 등록되었습니다.' }, { status: 201 })
   } catch (error: any) {
     if (error.code === 'ER_DUP_ENTRY') {
-      return NextResponse.json({ error: 'Employee Number already exists' }, { status: 400 })
+      return NextResponse.json({ error: '이미 존재하는 사번입니다.' }, { status: 400 })
     }
     console.error('Failed to create user:', error)
-    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
+    return NextResponse.json({ error: '사용자 등록 실패' }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json()
+    const { 
+      employeeNumber, 
+      userName, 
+      companyName, 
+      departName, 
+      sectionName,
+      teamName,
+      className,
+      hireDate,
+      position,
+      jobGrade,
+      email, 
+      phoneNumber,
+      accessLevel 
+    } = body
+
+    if (!employeeNumber) {
+      return NextResponse.json({ error: '사번이 누락되었습니다.' }, { status: 400 })
+    }
+
+    const query = `
+      UPDATE user_tbl SET 
+        UserName = ?, 
+        CompanyName = ?, 
+        DepartName = ?, 
+        SectionName = ?, 
+        TeamName = ?, 
+        ClassName = ?, 
+        HireDate = ?, 
+        Position = ?, 
+        JobGrade = ?, 
+        Email = ?, 
+        PhoneNumber = ?, 
+        AccessLevel = ?
+      WHERE EmployeeNumber = ?
+    `
+    const params = [
+      userName, companyName, departName, sectionName, teamName,
+      className, hireDate, position, jobGrade, email, 
+      phoneNumber, accessLevel, employeeNumber
+    ]
+
+    const [result]: any = await pool.query(query, params)
+    
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: '수정할 사용자를 찾을 수 없습니다.' }, { status: 404 })
+    }
+
+    return NextResponse.json({ message: '사용자 정보가 수정되었습니다.' })
+  } catch (error) {
+    console.error('Failed to update user:', error)
+    return NextResponse.json({ error: '사용자 수정 실패' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const employeeNumber = searchParams.get('employeeNumber')
+
+    if (!employeeNumber) {
+      return NextResponse.json({ error: '사번이 누락되었습니다.' }, { status: 400 })
+    }
+
+    const [result]: any = await pool.query('DELETE FROM user_tbl WHERE EmployeeNumber = ?', [employeeNumber])
+    
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: '삭제할 사용자를 찾을 수 없습니다.' }, { status: 404 })
+    }
+
+    return NextResponse.json({ message: '사용자가 삭제되었습니다.' })
+  } catch (error) {
+    console.error('Failed to delete user:', error)
+    return NextResponse.json({ error: '사용자 삭제 실패' }, { status: 500 })
   }
 }
