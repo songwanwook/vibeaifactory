@@ -35,8 +35,8 @@ export default function RobotWorkOrderPage() {
   const [data, setData] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    dateStart: '2025-06-01',
-    dateEnd: '2025-07-31',
+    dateStart: '',
+    dateEnd: '',
     robotNo: 'ALL',
     finishStatus: 'ALL'
   });
