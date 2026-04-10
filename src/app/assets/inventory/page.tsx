@@ -242,7 +242,7 @@ export default function AssetInventoryPage() {
               type="date" 
               value={formData.PurchDate}
               onChange={handleInputChange}
-              className="h-8 bg-cyan-400/20 border-cyan-400/30 text-cyan-50 text-xs" 
+              className="h-8 bg-cyan-400/20 border-cyan-400/30 text-cyan-50 text-xs [color-scheme:dark]" 
             />
           </div>
           <div className="flex items-center gap-3">
@@ -252,7 +252,7 @@ export default function AssetInventoryPage() {
               type="date" 
               value={formData.InspectDate}
               onChange={handleInputChange}
-              className="h-8 bg-cyan-400/20 border-cyan-400/30 text-cyan-50 text-xs" 
+              className="h-8 bg-cyan-400/20 border-cyan-400/30 text-cyan-50 text-xs [color-scheme:dark]" 
             />
           </div>
           <div className="flex items-center gap-3">

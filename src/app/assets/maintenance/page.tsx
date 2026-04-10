@@ -276,7 +276,7 @@ export default function MalfunctionHistoryPage() {
                     <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">로봇번호</Label>
                       <Select value={breakdownForm.RobotNo} onValueChange={(val) => setBreakdownForm(p => ({...p, RobotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs"><SelectValue placeholder="선택" /></SelectTrigger><SelectContent>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
                     </div>
-                    <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">고장일자</Label><Input name="BreakdnDate" type="date" value={breakdownForm.BreakdnDate} onChange={handleBreakdownInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
+                    <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">고장일자</Label><Input name="BreakdnDate" type="date" value={breakdownForm.BreakdnDate} onChange={handleBreakdownInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white [color-scheme:dark]" /></div>
                     <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">사번</Label><Input name="EmployeeNumber" value={breakdownForm.EmployeeNumber} onChange={handleBreakdownInputChange} className="h-8 bg-slate-900 border-white/10 text-xs" /></div>
                   </div>
                   <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">고장사유</Label><Input name="BreakdnReason" value={breakdownForm.BreakdnReason || ''} onChange={handleBreakdownInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
@@ -287,8 +287,8 @@ export default function MalfunctionHistoryPage() {
                   <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">장비번호</Label>
                     <Select value={filter.robotNo} onValueChange={(val) => setFilter(p => ({...p, robotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs"><SelectValue placeholder="전체" /></SelectTrigger><SelectContent><SelectItem value="all">전체</SelectItem>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
                   </div>
-                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(시작)</Label><Input type="date" value={filter.startDate} onChange={(e) => setFilter(p => ({...p, startDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
-                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(종료)</Label><Input type="date" value={filter.endDate} onChange={(e) => setFilter(p => ({...p, endDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(시작)</Label><Input type="date" value={filter.startDate} onChange={(e) => setFilter(p => ({...p, startDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs text-white [color-scheme:dark] flex-1" /></div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(종료)</Label><Input type="date" value={filter.endDate} onChange={(e) => setFilter(p => ({...p, endDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs text-white [color-scheme:dark] flex-1" /></div>
                 </div>
               </div>
 
@@ -346,7 +346,7 @@ export default function MalfunctionHistoryPage() {
                     <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">로봇번호</Label>
                       <Select value={repairForm.RobotNo} onValueChange={(val) => setRepairForm(p => ({...p, RobotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs flex-1"><SelectValue placeholder="선택" /></SelectTrigger><SelectContent>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
                     </div>
-                    <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리일시</Label><Input name="RepairDateTime" value={repairForm.RepairDateTime} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
+                    <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리일시</Label><Input name="RepairDateTime" type="date" value={repairForm.RepairDateTime} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white [color-scheme:dark] flex-1" /></div>
                   </div>
                   <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리부품</Label><Input name="RepairPart" value={repairForm.RepairPart} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
                   <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-16 shrink-0">수리내용</Label><Input name="RepairDesc" value={repairForm.RepairDesc || ''} onChange={handleRepairInputChange} className="h-8 bg-slate-900 border-white/10 text-xs flex-1" /></div>
@@ -356,8 +356,8 @@ export default function MalfunctionHistoryPage() {
                   <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">장비번호</Label>
                     <Select value={filter.robotNo} onValueChange={(val) => setFilter(p => ({...p, robotNo: val}))}><SelectTrigger className="h-8 bg-slate-900 border-white/10 text-xs flex-1"><SelectValue placeholder="전체" /></SelectTrigger><SelectContent><SelectItem value="all">전체</SelectItem>{robots.map(r => <SelectItem key={r.RobotNo} value={r.RobotNo}>{r.RobotNo}</SelectItem>)}</SelectContent></Select>
                   </div>
-                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(시작)</Label><Input type="date" value={filter.startDate} onChange={(e) => setFilter(p => ({...p, startDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-[11px] flex-1" /></div>
-                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(종료)</Label><Input type="date" value={filter.endDate} onChange={(e) => setFilter(p => ({...p, endDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-[11px] flex-1" /></div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(시작)</Label><Input type="date" value={filter.startDate} onChange={(e) => setFilter(p => ({...p, startDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs text-white [color-scheme:dark] flex-1" /></div>
+                  <div className="flex items-center gap-3"><Label className="text-xs text-slate-300 w-20 shrink-0">기간(종료)</Label><Input type="date" value={filter.endDate} onChange={(e) => setFilter(p => ({...p, endDate: e.target.value}))} className="h-8 bg-slate-900 border-white/10 text-xs text-white [color-scheme:dark] flex-1" /></div>
                 </div>
               </div>
 

@@ -282,6 +282,16 @@ export default function UserManagementPage() {
                 <Label className="text-[11px] text-slate-400">연락처</Label>
                 <Input name="phoneNumber" value={userForm.phoneNumber || ''} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" placeholder="010-0000-0000" />
               </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-slate-400">입사일자</Label>
+                <Input 
+                  name="hireDate" 
+                  type="date"
+                  value={userForm.hireDate ? userForm.hireDate.split('T')[0] : ''} 
+                  onChange={handleInputChange} 
+                  className="h-8 bg-slate-900 border-white/10 text-xs text-white [color-scheme:dark]" 
+                />
+              </div>
             </div>
           </div>
         </div>
