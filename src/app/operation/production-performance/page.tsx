@@ -97,7 +97,7 @@ export default function ProductionPerformancePage() {
                 onCheckedChange={(checked) => setShowAllDates(!!checked)}
                 className="border-slate-500"
               />
-              <label htmlFor="all-dates" className="text-[11px] text-slate-400 cursor-pointer select-none whitespace-nowrap">전체 일자</label>
+              <label htmlFor="all-dates" className="text-[11px] text-slate-400 cursor-pointer select-none whitespace-nowrap">기간 전체보기</label>
             </div>
           </div>
           <div className="flex items-center gap-3 ml-4">
