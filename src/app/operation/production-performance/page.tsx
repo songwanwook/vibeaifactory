@@ -29,7 +29,7 @@ interface ProductionData {
 export default function ProductionPerformancePage() {
   const [data, setData] = useState<ProductionData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAllDates, setShowAllDates] = useState(false);
+  const [showAllDates, setShowAllDates] = useState(true);
   const [filters, setFilters] = useState({
     date: '2025-06-13',
     orderNo: ''

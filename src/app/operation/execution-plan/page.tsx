@@ -29,7 +29,7 @@ interface PlanData {
 export default function ExecutionPlanPage() {
   const [data, setData] = useState<PlanData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAllDates, setShowAllDates] = useState(false);
+  const [showAllDates, setShowAllDates] = useState(true);
   const [filters, setFilters] = useState({
     month: '2025-06',
     process: 'all'
