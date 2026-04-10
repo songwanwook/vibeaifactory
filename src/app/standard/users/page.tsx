@@ -26,8 +26,8 @@ interface User {
   hireDate: string | null;
   position: string | null;
   jobGrade: string | null;
-  email: string;
-  phoneNumber: string;
+  email: string | null;
+  phoneNumber: string | null;
   accessLevel: string;
 }
 
@@ -37,8 +37,9 @@ export default function UserManagementPage() {
   const [selectedCompany, setSelectedCompany] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isClient, setIsClient] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
-  const [userForm, setUserForm] = useState<Partial<User>>({
+  const initialFormState: Partial<User> = {
     employeeNumber: '',
     userName: '',
     companyName: 'HD현대미포',
@@ -47,7 +48,9 @@ export default function UserManagementPage() {
     accessLevel: 'Level1',
     email: '',
     phoneNumber: ''
-  });
+  };
+
+  const [userForm, setUserForm] = useState<Partial<User>>(initialFormState);
 
   const fetchUsers = async () => {
     try {
@@ -85,29 +88,12 @@ export default function UserManagementPage() {
   const handleReset = () => {
     setSelectedCompany('all');
     setSearchTerm('');
-    setUserForm({
-      employeeNumber: '',
-      userName: '',
-      companyName: 'HD현대미포',
-      departName: '',
-      jobGrade: '',
-      accessLevel: 'Level1',
-      email: '',
-      phoneNumber: ''
-    });
+    handleNewUser();
   };
 
   const handleNewUser = () => {
-    setUserForm({
-      employeeNumber: '',
-      userName: '',
-      companyName: 'HD현대미포',
-      departName: '',
-      jobGrade: '',
-      accessLevel: 'Level1',
-      email: '',
-      phoneNumber: ''
-    });
+    setUserForm(initialFormState);
+    setIsEditMode(false);
   };
 
   const handleSaveUser = async () => {
@@ -116,8 +102,9 @@ export default function UserManagementPage() {
       return;
     }
 
-    const isExisting = users.some(u => u.employeeNumber === userForm.employeeNumber);
-    const method = isExisting ? 'PUT' : 'POST';
+    // 신규 등록 시에는 POST, 수정 시에는 PUT 사용
+    // isEditMode 상태로 결정하거나, users 목록에 이미 존재하는지 체크
+    const method = isEditMode ? 'PUT' : 'POST';
 
     try {
       const res = await fetch('/api/users', {
@@ -129,12 +116,14 @@ export default function UserManagementPage() {
       const result = await res.json();
       if (res.ok) {
         alert(result.message);
+        if (!isEditMode) handleNewUser(); // 등록 후 폼 초기화
         fetchUsers();
       } else {
         alert(result.error || '저장 실패');
       }
     } catch (error) {
       console.error('Failed to save user:', error);
+      alert('서버 통신 오류가 발생했습니다.');
     }
   };
 
@@ -144,7 +133,7 @@ export default function UserManagementPage() {
       return;
     }
 
-    if (!confirm('정말로 삭제하시겠습니까?')) return;
+    if (!confirm(`사번 ${userForm.employeeNumber} (${userForm.userName}) 사용자를 정말로 삭제하시겠습니까?`)) return;
 
     try {
       const res = await fetch(`/api/users?employeeNumber=${userForm.employeeNumber}`, {
@@ -161,11 +150,19 @@ export default function UserManagementPage() {
       }
     } catch (error) {
       console.error('Failed to delete user:', error);
+      alert('서버 통신 오류가 발생했습니다.');
     }
   };
 
   const handleRowClick = (user: User) => {
-    setUserForm(user);
+    setUserForm({
+      ...user,
+      departName: user.departName || '',
+      jobGrade: user.jobGrade || '',
+      email: user.email || '',
+      phoneNumber: user.phoneNumber || ''
+    });
+    setIsEditMode(true);
   };
 
   if (!isClient) return null;
@@ -180,7 +177,11 @@ export default function UserManagementPage() {
 
       <div className="flex-1 p-6 space-y-4 overflow-hidden flex flex-col min-h-0">
         <div className="flex items-center justify-between shrink-0">
-          <h2 className="text-xl font-bold text-white tracking-tight">사용자관리</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-white tracking-tight">사용자관리</h2>
+            {isEditMode && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30">수정 모드</span>}
+            {!isEditMode && userForm.employeeNumber && <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">신규 작성 중</span>}
+          </div>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={fetchUsers}>
               <RotateCcw className="w-3.5 h-3.5 mr-1" /> 새로고침
@@ -188,22 +189,22 @@ export default function UserManagementPage() {
             <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={handleNewUser}>
               <Plus className="w-3.5 h-3.5 mr-1" /> 신규
             </Button>
-            <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={handleSaveUser}>
+            <Button size="sm" variant="secondary" className="bg-blue-600 hover:bg-blue-500 text-white border-none h-8 text-xs px-4" onClick={handleSaveUser}>
               <Save className="w-3.5 h-3.5 mr-1" /> 저장
             </Button>
-            <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={handleDeleteUser}>
+            <Button size="sm" variant="secondary" className="bg-red-900/40 hover:bg-red-800 text-red-200 border border-red-500/30 h-8 text-xs px-4" onClick={handleDeleteUser}>
               <Trash2 className="w-3.5 h-3.5 mr-1" /> 삭제
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 shrink-0">
-          <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 space-y-4">
+          <div className="bg-slate-800/40 border border-white/5 rounded-lg p-4 space-y-4 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold text-blue-400">사용자 정보 입력/수정</h3>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Label className="text-xs text-slate-300">회사명</Label>
+                  <Label className="text-xs text-slate-300">회사필터</Label>
                   <Select value={selectedCompany} onValueChange={setSelectedCompany}>
                     <SelectTrigger className="h-7 w-32 bg-slate-900 border-white/10 text-[11px] text-white">
                       <SelectValue placeholder="회사 선택" />
@@ -226,17 +227,18 @@ export default function UserManagementPage() {
                   <Search className="absolute right-2 top-1.5 w-3.5 h-3.5 text-slate-500" />
                 </div>
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-7 text-[11px] px-4" onClick={fetchUsers}>조회</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-[11px] text-slate-400 px-2" onClick={handleReset}>초기화</Button>
               </div>
             </div>
             
             <div className="grid grid-cols-4 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-[11px] text-slate-400">사번 (ID)</Label>
-                <Input name="employeeNumber" value={userForm.employeeNumber} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" />
+                <Label className="text-[11px] text-slate-400 flex items-center gap-1">사번 (ID) <span className="text-red-500">*</span></Label>
+                <Input name="employeeNumber" value={userForm.employeeNumber} onChange={handleInputChange} disabled={isEditMode} className={`h-8 bg-slate-900 border-white/10 text-xs text-white ${isEditMode ? 'opacity-50' : ''}`} placeholder="사번 입력" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] text-slate-400">성명</Label>
-                <Input name="userName" value={userForm.userName} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" />
+                <Label className="text-[11px] text-slate-400 flex items-center gap-1">성명 <span className="text-red-500">*</span></Label>
+                <Input name="userName" value={userForm.userName} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" placeholder="이름 입력" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[11px] text-slate-400">회사명</Label>
@@ -252,11 +254,11 @@ export default function UserManagementPage() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[11px] text-slate-400">부서명</Label>
-                <Input name="departName" value={userForm.departName || ''} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" />
+                <Input name="departName" value={userForm.departName || ''} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" placeholder="부서 입력" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[11px] text-slate-400">직급</Label>
-                <Input name="jobGrade" value={userForm.jobGrade || ''} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" />
+                <Input name="jobGrade" value={userForm.jobGrade || ''} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" placeholder="직급 입력" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[11px] text-slate-400">권한레벨</Label>
@@ -274,11 +276,11 @@ export default function UserManagementPage() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[11px] text-slate-400">이메일</Label>
-                <Input name="email" value={userForm.email || ''} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" />
+                <Input name="email" value={userForm.email || ''} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" placeholder="email@example.com" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[11px] text-slate-400">연락처</Label>
-                <Input name="phoneNumber" value={userForm.phoneNumber || ''} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" />
+                <Input name="phoneNumber" value={userForm.phoneNumber || ''} onChange={handleInputChange} className="h-8 bg-slate-900 border-white/10 text-xs text-white" placeholder="010-0000-0000" />
               </div>
             </div>
           </div>
