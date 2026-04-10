@@ -5,16 +5,21 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
-    const vessel = searchParams.get('vessel')
+    const orderNo = searchParams.get('orderNo')
 
     let query = `
       SELECT 
-        AssyName as process,
-        100 as target,
+        OrderDate as orderDate,
+        ProdActNo as orderNo,
+        ProjNo as vessel,
+        BlockName as block,
+        RobotNo as robotNo,
+        EmployeeNumber as worker,
         CAST(WorkNum AS UNSIGNED) as actual,
-        CONCAT(ROUND((CAST(WorkNum AS UNSIGNED) / 100) * 100, 1), '%') as rate,
-        0 as defective,
-        EmployeeNumber as worker
+        CASE 
+          WHEN FinishStatus = 'Y' THEN '완료'
+          ELSE '진행중'
+        END as status
       FROM work_order_tbl
     `
     const params: any[] = []
@@ -25,9 +30,9 @@ export async function GET(request: Request) {
       params.push(date)
     }
 
-    if (vessel) {
-      conditions.push(`ProjNo = ?`)
-      params.push(vessel)
+    if (orderNo) {
+      conditions.push(`ProdActNo LIKE ?`)
+      params.push(`%${orderNo}%`)
     }
 
     if (conditions.length > 0) {

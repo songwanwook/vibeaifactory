@@ -16,12 +16,14 @@ import {
 import { Factory, Loader2, RotateCcw } from "lucide-react";
 
 interface ProductionData {
-  process: string;
-  target: number;
-  actual: number;
-  rate: string;
-  defective: number;
+  orderDate: string;
+  orderNo: string;
+  vessel: string;
+  block: string;
+  robotNo: string;
   worker: string;
+  actual: number;
+  status: string;
 }
 
 export default function ProductionPerformancePage() {
@@ -30,7 +32,7 @@ export default function ProductionPerformancePage() {
   const [showAllDates, setShowAllDates] = useState(false);
   const [filters, setFilters] = useState({
     date: '2025-06-13',
-    vessel: ''
+    orderNo: ''
   });
 
   const fetchData = async () => {
@@ -85,7 +87,7 @@ export default function ProductionPerformancePage() {
             <Label className="text-xs font-bold text-slate-300 shrink-0">작업일자</Label>
             <Input 
               type="date" 
-              className="h-8 bg-cyan-400/10 border-cyan-400/30 text-xs text-white disabled:opacity-50" 
+              className="h-8 bg-cyan-400/10 border-cyan-400/30 text-xs text-white disabled:opacity-50 [color-scheme:dark]" 
               value={filters.date}
               onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
               disabled={showAllDates}
@@ -101,56 +103,59 @@ export default function ProductionPerformancePage() {
             </div>
           </div>
           <div className="flex items-center gap-3 ml-4">
-            <Label className="text-xs font-bold text-slate-300 shrink-0">호선번호</Label>
+            <Label className="text-xs font-bold text-slate-300 shrink-0">오더번호</Label>
             <Input 
-              className="h-8 w-32 bg-cyan-400/10 border-cyan-400/30 text-xs text-white" 
-              placeholder="호선 입력" 
-              value={filters.vessel}
-              onChange={(e) => setFilters(prev => ({ ...prev, vessel: e.target.value }))}
+              className="h-8 w-40 bg-cyan-400/10 border-cyan-400/30 text-xs text-white" 
+              placeholder="오더번호 입력" 
+              value={filters.orderNo}
+              onChange={(e) => setFilters(prev => ({ ...prev, orderNo: e.target.value }))}
             />
           </div>
         </div>
 
-        <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col">
+        <div className="flex-1 border border-white/10 rounded-lg overflow-hidden bg-slate-900 flex flex-col shadow-2xl">
           {loading ? (
             <div className="flex-1 flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
             </div>
           ) : (
             <Table className="text-[11px]">
-              <TableHeader className="bg-blue-600 sticky top-0 z-10">
+              <TableHeader className="bg-blue-600 sticky top-0 z-10 backdrop-blur-sm">
                 <TableRow className="border-white/10 hover:bg-blue-600">
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">공정명</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">계획수량</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">실적수량</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">목표달성률</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">불량수량</TableHead>
-                  <TableHead className="text-white text-center font-bold h-9">공정담당자</TableHead>
+                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">오더일자</TableHead>
+                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">오더번호</TableHead>
+                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">작업호선</TableHead>
+                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">작업블럭</TableHead>
+                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">장비번호</TableHead>
+                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">작업담당</TableHead>
+                  <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">실적횟수</TableHead>
+                  <TableHead className="text-white text-center font-bold h-9">완료여부</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="bg-[#111827]">
                 {data.length > 0 ? (
                   data.map((row, i) => (
-                    <TableRow key={i} className="border-white/5 hover:bg-white/5">
-                      <TableCell className="text-center font-bold text-white border-r border-white/5">{row.process}</TableCell>
-                      <TableCell className="text-center text-slate-400 border-r border-white/5">{row.target}</TableCell>
-                      <TableCell className="text-center text-white font-bold border-r border-white/5">{row.actual}</TableCell>
-                      <TableCell className="text-center border-r border-white/5">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-20 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-green-500" style={{ width: row.rate }} />
-                          </div>
-                          <span className="text-slate-300">{row.rate}</span>
-                        </div>
+                    <TableRow key={i} className="border-white/5 hover:bg-white/5 h-10 transition-colors">
+                      <TableCell className="text-center text-slate-400 border-r border-white/5">{row.orderDate ? row.orderDate.split('T')[0] : '-'}</TableCell>
+                      <TableCell className="text-center font-bold text-white border-r border-white/5">{row.orderNo}</TableCell>
+                      <TableCell className="text-center text-white border-r border-white/5">{row.vessel}</TableCell>
+                      <TableCell className="text-center text-slate-300 border-r border-white/5">{row.block}</TableCell>
+                      <TableCell className="text-center text-slate-300 border-r border-white/5">{row.robotNo}</TableCell>
+                      <TableCell className="text-center text-slate-300 border-r border-white/5">{row.worker}</TableCell>
+                      <TableCell className="text-center font-bold text-blue-400 border-r border-white/5">{row.actual}</TableCell>
+                      <TableCell className="text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                          row.status === '완료' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                        }`}>
+                          {row.status}
+                        </span>
                       </TableCell>
-                      <TableCell className="text-center text-red-400 border-r border-white/5">{row.defective}</TableCell>
-                      <TableCell className="text-center text-slate-400">{row.worker}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-slate-500">
-                      데이터가 없습니다.
+                    <TableCell colSpan={8} className="h-24 text-center text-slate-500 bg-slate-900/50">
+                      조회된 데이터가 없습니다.
                     </TableCell>
                   </TableRow>
                 )}
