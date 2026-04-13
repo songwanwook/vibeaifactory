@@ -107,7 +107,7 @@ export default function LineMonitoringPage() {
         </div>
 
         {/* 메인 대시보드 그리드 */}
-        <div className="grid grid-cols-[450px_1fr] gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {/* 좌측 요약 테이블 */}
           <div className="flex flex-col space-y-4">
             <div className="bg-[#1e293b] border border-white/10 rounded-lg overflow-hidden flex flex-col h-[400px]">
