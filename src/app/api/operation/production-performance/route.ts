@@ -53,19 +53,44 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { orderDate, orderNo, vessel, block, robotNo, worker, actual } = body
+    const { 
+      orderNo, 
+      vessel: projectNo, 
+      block: blockName
+    } = body
+
+    const today = new Date()
+    const orderDate = today.toISOString().split('T')[0]
+    const startDateTime = orderDate
+    const finishDate = new Date(today)
+    finishDate.setDate(today.getDate() + 10)
+    const finishDateTime = finishDate.toISOString().split('T')[0]
+
+    // ProdActID = 작업호선-오더번호-1
+    const prodActId = `${projectNo}-${orderNo}-1`
 
     const query = `
       INSERT INTO work_order_tbl 
-      (OrderDate, ProdActNo, ProjNo, BlockName, RobotNo, EmployeeNumber, WorkNum, FinishStatus)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'N')
+      (ProdActID, OrderDate, ProjNo, BlockName, AssyName, ProdActNo, RobotNo, EmployeeNumber, StartDateTime, FinishDateTime)
+      VALUES (?, ?, ?, ?, 'NA', ?, 'NA', 'NA', ?, ?)
     `
-    await pool.query(query, [orderDate, orderNo, vessel, block, robotNo, worker, actual || 0])
+    
+    const params = [
+      prodActId,
+      orderDate,
+      projectNo || '',
+      blockName || '',
+      orderNo || '',
+      startDateTime,
+      finishDateTime
+    ]
+
+    await pool.query(query, params)
     
     return NextResponse.json({ message: '오더가 성공적으로 추가되었습니다.' })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to add order:', error)
-    return NextResponse.json({ error: '오더 추가에 실패했습니다.' }, { status: 500 })
+    return NextResponse.json({ error: error.message || '오더 추가에 실패했습니다.' }, { status: 500 })
   }
 }
 

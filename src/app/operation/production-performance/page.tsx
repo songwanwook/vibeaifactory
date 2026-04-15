@@ -99,15 +99,18 @@ export default function ProductionPerformancePage() {
         body: JSON.stringify(form)
       });
 
+      const result = await res.json();
+
       if (res.ok) {
         alert('오더가 추가되었습니다.');
         handleNewOrder();
         fetchData();
       } else {
-        alert('추가 실패');
+        alert(`추가 실패: ${result.error || '알 수 없는 오류가 발생했습니다.'}`);
       }
     } catch (error) {
       console.error(error);
+      alert('서버와 통신 중 오류가 발생했습니다.');
     }
   };
 
