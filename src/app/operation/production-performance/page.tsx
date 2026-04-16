@@ -142,13 +142,13 @@ export default function ProductionPerformancePage() {
   const handleRowClick = (item: ProductionData) => {
     setSelectedId(item.id);
     setForm({
-      orderDate: item.orderDate ? item.orderDate.split('T')[0] : '',
-      orderNo: item.orderNo,
-      vessel: item.vessel,
-      block: item.block,
-      robotNo: item.robotNo,
-      worker: item.worker,
-      actual: item.actual
+      orderDate: item.orderDate ? String(item.orderDate).split('T')[0] : '',
+      orderNo: item.orderNo || '',
+      vessel: item.vessel || '',
+      block: item.block || '',
+      robotNo: item.robotNo || '',
+      worker: item.worker || '',
+      actual: item.actual || 0
     });
     setIsEditMode(true);
   };
@@ -270,7 +270,7 @@ export default function ProductionPerformancePage() {
                       className={`border-white/5 hover:bg-blue-500/20 h-10 transition-colors cursor-pointer ${selectedId === row.id ? 'bg-blue-500/30' : ''}`}
                       onClick={() => handleRowClick(row)}
                     >
-                      <TableCell className="text-center text-slate-400 border-r border-white/5">{row.orderDate ? row.orderDate.split('T')[0] : '-'}</TableCell>
+                      <TableCell className="text-center text-slate-400 border-r border-white/5">{row.orderDate ? String(row.orderDate).split('T')[0] : '-'}</TableCell>
                       <TableCell className="text-center font-bold text-white border-r border-white/5">{row.orderNo}</TableCell>
                       <TableCell className="text-center text-white border-r border-white/5">{row.vessel}</TableCell>
                       <TableCell className="text-center text-slate-300 border-r border-white/5">{row.block}</TableCell>
