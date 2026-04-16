@@ -171,9 +171,6 @@ export default function ProductionPerformancePage() {
             <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white h-8 text-xs" onClick={fetchData}>
               <RotateCcw className="w-3.5 h-3.5 mr-1" /> 새로고침
             </Button>
-            <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white h-8 text-xs" onClick={handleNewOrder}>
-              <Plus className="w-3.5 h-3.5 mr-1" /> 신규
-            </Button>
             <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs px-6" onClick={handleAddOrder}>
               <Save className="w-3.5 h-3.5 mr-1" /> {isEditMode ? '저장' : '오더 등록'}
             </Button>
