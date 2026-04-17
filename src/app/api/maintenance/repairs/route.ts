@@ -81,3 +81,26 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Failed to update repair' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const repairNo = searchParams.get('repairNo')
+
+    if (!repairNo) {
+      return NextResponse.json({ error: '수리번호가 필요합니다.' }, { status: 400 })
+    }
+
+    const query = 'DELETE FROM repair_tbl WHERE RepairNo = ?'
+    const [result]: any = await pool.query(query, [repairNo])
+
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: '삭제할 이력을 찾을 수 없습니다.' }, { status: 404 })
+    }
+
+    return NextResponse.json({ message: '삭제되었습니다.' })
+  } catch (error) {
+    console.error('Failed to delete repair:', error)
+    return NextResponse.json({ error: 'Failed to delete repair' }, { status: 500 })
+  }
+}

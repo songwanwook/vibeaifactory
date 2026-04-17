@@ -102,3 +102,32 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Failed to update breakdown' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const breakdownNo = searchParams.get('breakdownNo')
+
+    if (!breakdownNo) {
+      return NextResponse.json({ error: '고장번호가 필요합니다.' }, { status: 400 })
+    }
+
+    // 수리 이력이 있는지 확인 (외래 키 제약 조건 대비)
+    const [repairs]: any = await pool.query('SELECT RepairNo FROM repair_tbl WHERE BreakdnNo = ?', [breakdownNo])
+    if (repairs.length > 0) {
+      return NextResponse.json({ error: '해당 고장에 연결된 수리 이력이 있어 삭제할 수 없습니다.' }, { status: 400 })
+    }
+
+    const query = 'DELETE FROM breakdn_tbl WHERE BreakdnNo = ?'
+    const [result]: any = await pool.query(query, [breakdownNo])
+
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: '삭제할 이력을 찾을 수 없습니다.' }, { status: 404 })
+    }
+
+    return NextResponse.json({ message: '삭제되었습니다.' })
+  } catch (error) {
+    console.error('Failed to delete breakdown:', error)
+    return NextResponse.json({ error: 'Failed to delete breakdown' }, { status: 500 })
+  }
+}

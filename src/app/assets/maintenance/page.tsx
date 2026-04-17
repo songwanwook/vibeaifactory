@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Save, Loader2, History, Wrench } from "lucide-react";
+import { Search, Plus, Save, Loader2, History, Wrench, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Breakdown {
@@ -189,6 +189,27 @@ export default function MalfunctionHistoryPage() {
     } catch (error) { console.error(error); }
   };
 
+  const handleDeleteBreakdown = async () => {
+    if (!breakdownForm.BreakdnNo) {
+      alert('삭제할 항목을 선택해 주세요.');
+      return;
+    }
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+    try {
+      const res = await fetch(`/api/maintenance/breakdowns?breakdownNo=${breakdownForm.BreakdnNo}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        alert('삭제되었습니다.');
+        setBreakdownForm({ BreakdnNo: '', RobotNo: '', BreakdnDate: '', BreakdnReason: '', BreakdnDesc: '', EmployeeNumber: '' });
+        fetchBreakdowns();
+      } else {
+        const err = await res.json();
+        alert(err.error || '삭제 실패');
+      }
+    } catch (error) { console.error(error); }
+  };
+
   const handleNewRepair = async () => {
     const requiredFields = ['RepairNo', 'BreakdnNo', 'RobotNo', 'RepairDateTime', 'RepairPart'];
     if (!requiredFields.every(f => repairForm[f as keyof typeof repairForm]?.trim())) {
@@ -230,6 +251,27 @@ export default function MalfunctionHistoryPage() {
     } catch (error) { console.error(error); }
   };
 
+  const handleDeleteRepair = async () => {
+    if (!repairForm.RepairNo) {
+      alert('삭제할 항목을 선택해 주세요.');
+      return;
+    }
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+    try {
+      const res = await fetch(`/api/maintenance/repairs?repairNo=${repairForm.RepairNo}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        alert('삭제되었습니다.');
+        setRepairForm({ RepairNo: '', BreakdnNo: '', RobotNo: '', RepairDateTime: '', RepairPart: '', RepairCost: '', RepairDesc: '' });
+        fetchRepairs();
+      } else {
+        const err = await res.json();
+        alert(err.error || '삭제 실패');
+      }
+    } catch (error) { console.error(error); }
+  };
+
   if (!isClient) return null;
 
   return (
@@ -262,6 +304,9 @@ export default function MalfunctionHistoryPage() {
               </Button>
               <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={() => activeTab === 'breakdown' ? handleSaveBreakdown() : handleSaveRepair()}>
                 <Save className="w-3.5 h-3.5 mr-1" /> 저장
+              </Button>
+              <Button size="sm" variant="secondary" className="bg-red-900/50 hover:bg-red-800 text-white border-none h-8 text-xs px-4" onClick={() => activeTab === 'breakdown' ? handleDeleteBreakdown() : handleDeleteRepair()}>
+                <Trash2 className="w-3.5 h-3.5 mr-1" /> 삭제
               </Button>
             </div>
           </div>
