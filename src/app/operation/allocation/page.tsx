@@ -13,7 +13,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ClipboardList, Loader2, RotateCcw } from "lucide-react";
+import { ClipboardList, Loader2, RotateCcw, Edit2, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface WorkOrder {
   prodActId: string;
@@ -40,6 +48,9 @@ export default function RobotWorkOrderPage() {
     robotNo: 'ALL',
     finishStatus: 'ALL'
   });
+  const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const fetchData = async () => {
     try {
@@ -60,6 +71,54 @@ export default function RobotWorkOrderPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleEditClick = (order: WorkOrder) => {
+    setSelectedOrder({ ...order });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = async (id: string) => {
+    if (!confirm('정말로 이 작업오더를 삭제하시겠습니까?')) return;
+
+    try {
+      const res = await fetch(`/api/operation/allocation?id=${id}`, {
+        method: 'DELETE',
+      });
+      const result = await res.json();
+      if (res.ok) {
+        toast({ title: "성공", description: result.message });
+        fetchData();
+      } else {
+        toast({ title: "오류", description: result.error, variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('Failed to delete:', error);
+      toast({ title: "오류", description: "삭제 중 오류가 발생했습니다.", variant: "destructive" });
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      const res = await fetch('/api/operation/allocation', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(selectedOrder),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        toast({ title: "성공", description: result.message });
+        setIsEditDialogOpen(false);
+        fetchData();
+      } else {
+        toast({ title: "오류", description: result.error, variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('Failed to update:', error);
+      toast({ title: "오류", description: "수정 중 오류가 발생했습니다.", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0f172a]">
@@ -151,7 +210,8 @@ export default function RobotWorkOrderPage() {
                     <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">작업내용</TableHead>
                     <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">Activity No</TableHead>
                     <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">완료여부</TableHead>
-                    <TableHead className="text-white text-center font-bold h-9">종료예정일</TableHead>
+                    <TableHead className="text-white text-center font-bold h-9 border-r border-white/10">종료예정일</TableHead>
+                    <TableHead className="text-white text-center font-bold h-9">관리</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="bg-[#0f172a]">
@@ -169,12 +229,22 @@ export default function RobotWorkOrderPage() {
                         <TableCell className="text-center border-r border-white/5">
                           <span className={row.finishStatus === 'Y' ? 'text-blue-400 font-bold' : 'text-red-400 font-bold'}>{row.finishStatus}</span>
                         </TableCell>
-                        <TableCell className="text-center text-slate-500">{row.finishDateTime}</TableCell>
+                        <TableCell className="text-center text-slate-500 border-r border-white/5">{row.finishDateTime}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button size="icon" variant="ghost" className="h-6 w-6 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10" onClick={() => handleEditClick(row)}>
+                              <Edit2 size={12} />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400 hover:text-red-300 hover:bg-red-400/10" onClick={() => handleDeleteClick(row.prodActId)}>
+                              <Trash2 size={12} />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={10} className="h-32 text-center text-slate-500">
+                      <TableCell colSpan={11} className="h-32 text-center text-slate-500">
                         데이터가 없습니다.
                       </TableCell>
                     </TableRow>
@@ -189,6 +259,73 @@ export default function RobotWorkOrderPage() {
           <div className="w-6 h-6 bg-blue-600 flex items-center justify-center text-[10px] text-white rounded">1</div>
         </div>
       </div>
+
+      {/* 수정 다이얼로그 */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="bg-slate-900 border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle>작업오더 수정</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right text-xs">오더일자</Label>
+                <Input 
+                  type="date"
+                  className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                  value={selectedOrder.orderDate}
+                  onChange={(e) => setSelectedOrder({ ...selectedOrder, orderDate: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right text-xs">로봇번호</Label>
+                <Input 
+                  className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                  value={selectedOrder.robotNo}
+                  onChange={(e) => setSelectedOrder({ ...selectedOrder, robotNo: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right text-xs">호선번호</Label>
+                <Input 
+                  className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                  value={selectedOrder.projNo}
+                  onChange={(e) => setSelectedOrder({ ...selectedOrder, projNo: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right text-xs">실적횟수</Label>
+                <Input 
+                  type="number"
+                  className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                  value={selectedOrder.workNum}
+                  onChange={(e) => setSelectedOrder({ ...selectedOrder, workNum: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right text-xs">블럭명</Label>
+                <Input 
+                  className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                  value={selectedOrder.blockName}
+                  onChange={(e) => setSelectedOrder({ ...selectedOrder, blockName: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right text-xs">담당자 사번</Label>
+                <Input 
+                  className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                  value={selectedOrder.employeeNumber}
+                  onChange={(e) => setSelectedOrder({ ...selectedOrder, employeeNumber: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" className="h-8 text-xs hover:bg-white/5" onClick={() => setIsEditDialogOpen(false)}>취소</Button>
+            <Button className="h-8 text-xs bg-blue-600 hover:bg-blue-700" onClick={handleUpdate}>수정 완료</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

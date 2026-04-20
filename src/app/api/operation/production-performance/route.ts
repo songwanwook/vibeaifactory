@@ -109,3 +109,50 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: '오더 삭제에 실패했습니다.' }, { status: 500 })
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json()
+    const { 
+      id,
+      orderDate,
+      robotNo,
+      vessel,
+      actual,
+      block,
+      worker
+    } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID가 필요합니다.' }, { status: 400 })
+    }
+
+    const query = `
+      UPDATE work_order_tbl 
+      SET 
+        OrderDate = ?, 
+        RobotNo = ?, 
+        ProjNo = ?, 
+        WorkNum = ?, 
+        BlockName = ?, 
+        EmployeeNumber = ? 
+      WHERE ProdActID = ?
+    `
+    const params = [
+      orderDate,
+      robotNo,
+      vessel,
+      actual,
+      block,
+      worker,
+      id
+    ]
+
+    await pool.query(query, params)
+    
+    return NextResponse.json({ message: '오더가 성공적으로 수정되었습니다.' })
+  } catch (error: any) {
+    console.error('Failed to update order:', error)
+    return NextResponse.json({ error: error.message || '오더 수정에 실패했습니다.' }, { status: 500 })
+  }
+}

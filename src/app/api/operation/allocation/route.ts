@@ -57,3 +57,68 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Failed to fetch work orders' }, { status: 500 })
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json()
+    const { 
+      prodActId,
+      orderDate,
+      robotNo,
+      projNo,
+      workNum,
+      blockName,
+      employeeNumber
+    } = body
+
+    if (!prodActId) {
+      return NextResponse.json({ error: 'ProdActID가 필요합니다.' }, { status: 400 })
+    }
+
+    const query = `
+      UPDATE work_order_tbl 
+      SET 
+        OrderDate = ?, 
+        RobotNo = ?, 
+        ProjNo = ?, 
+        WorkNum = ?, 
+        BlockName = ?, 
+        EmployeeNumber = ? 
+      WHERE ProdActID = ?
+    `
+    const params = [
+      orderDate,
+      robotNo,
+      projNo,
+      workNum,
+      blockName,
+      employeeNumber,
+      prodActId
+    ]
+
+    await pool.query(query, params)
+    
+    return NextResponse.json({ message: '작업오더가 성공적으로 수정되었습니다.' })
+  } catch (error: any) {
+    console.error('Failed to update work order:', error)
+    return NextResponse.json({ error: error.message || '작업오더 수정에 실패했습니다.' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'ProdActID가 필요합니다.' }, { status: 400 })
+    }
+
+    await pool.query(`DELETE FROM work_order_tbl WHERE ProdActID = ?`, [id])
+    
+    return NextResponse.json({ message: '작업오더가 성공적으로 삭제되었습니다.' })
+  } catch (error: any) {
+    console.error('Failed to delete work order:', error)
+    return NextResponse.json({ error: error.message || '작업오더 삭제에 실패했습니다.' }, { status: 500 })
+  }
+}
