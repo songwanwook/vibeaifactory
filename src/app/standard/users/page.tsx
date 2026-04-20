@@ -96,19 +96,15 @@ export default function UserManagementPage() {
     setIsEditMode(false);
   };
 
-  const handleSaveUser = async () => {
+  const handleAddUser = async () => {
     if (!userForm.employeeNumber || !userForm.userName) {
       alert('사번과 성명은 필수 입력 항목입니다.');
       return;
     }
 
-    // 신규 등록 시에는 POST, 수정 시에는 PUT 사용
-    // isEditMode 상태로 결정하거나, users 목록에 이미 존재하는지 체크
-    const method = isEditMode ? 'PUT' : 'POST';
-
     try {
       const res = await fetch('/api/users', {
-        method,
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userForm)
       });
@@ -116,13 +112,39 @@ export default function UserManagementPage() {
       const result = await res.json();
       if (res.ok) {
         alert(result.message);
-        if (!isEditMode) handleNewUser(); // 등록 후 폼 초기화
+        handleNewUser(); // 등록 후 폼 초기화
+        fetchUsers();
+      } else {
+        alert(result.error || '등록 실패');
+      }
+    } catch (error) {
+      console.error('Failed to add user:', error);
+      alert('서버 통신 오류가 발생했습니다.');
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    if (!userForm.employeeNumber || !userForm.userName) {
+      alert('사번과 성명은 필수 입력 항목입니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userForm)
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        alert(result.message);
         fetchUsers();
       } else {
         alert(result.error || '저장 실패');
       }
     } catch (error) {
-      console.error('Failed to save user:', error);
+      console.error('Failed to update user:', error);
       alert('서버 통신 오류가 발생했습니다.');
     }
   };
@@ -189,7 +211,10 @@ export default function UserManagementPage() {
             <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white border-none h-8 text-xs px-4" onClick={handleNewUser}>
               <Plus className="w-3.5 h-3.5 mr-1" /> 신규
             </Button>
-            <Button size="sm" variant="secondary" className="bg-blue-600 hover:bg-blue-500 text-white border-none h-8 text-xs px-4" onClick={handleSaveUser}>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white border-none h-8 text-xs px-4" onClick={handleAddUser}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> 등록
+            </Button>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white border-none h-8 text-xs px-4" onClick={handleUpdateUser} disabled={!isEditMode}>
               <Save className="w-3.5 h-3.5 mr-1" /> 저장
             </Button>
             <Button size="sm" variant="secondary" className="bg-red-900/40 hover:bg-red-800 text-red-200 border border-red-500/30 h-8 text-xs px-4" onClick={handleDeleteUser}>

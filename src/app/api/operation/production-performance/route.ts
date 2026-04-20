@@ -56,7 +56,9 @@ export async function POST(request: Request) {
     const { 
       orderNo, 
       vessel: projectNo, 
-      block: blockName
+      block: blockName,
+      robotNo,
+      worker
     } = body
 
     const today = new Date()
@@ -72,7 +74,7 @@ export async function POST(request: Request) {
     const query = `
       INSERT INTO work_order_tbl 
       (ProdActID, OrderDate, ProjNo, BlockName, AssyName, ProdActNo, RobotNo, EmployeeNumber, StartDateTime, FinishDateTime)
-      VALUES (?, ?, ?, ?, 'NA', ?, 'NA', 'NA', ?, ?)
+      VALUES (?, ?, ?, ?, 'NA', ?, ?, ?, ?, ?)
     `
     
     const params = [
@@ -81,6 +83,8 @@ export async function POST(request: Request) {
       projectNo || '',
       blockName || '',
       orderNo || '',
+      robotNo || 'NA',
+      worker || 'NA',
       startDateTime,
       finishDateTime
     ]

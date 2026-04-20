@@ -114,6 +114,33 @@ export default function ProductionPerformancePage() {
     }
   };
 
+  const handleUpdateOrder = async () => {
+    if (!selectedId) {
+      alert('수정할 오더를 선택해 주세요.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/operation/production-performance', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, id: selectedId })
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        alert('오더가 수정되었습니다.');
+        fetchData();
+      } else {
+        alert(`수정 실패: ${result.error || '알 수 없는 오류가 발생했습니다.'}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('서버와 통신 중 오류가 발생했습니다.');
+    }
+  };
+
   const handleDeleteOrder = async () => {
     if (!selectedId) {
       alert('삭제할 오더를 선택해 주세요.');
@@ -171,8 +198,11 @@ export default function ProductionPerformancePage() {
             <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white h-8 text-xs" onClick={fetchData}>
               <RotateCcw className="w-3.5 h-3.5 mr-1" /> 새로고침
             </Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs px-6" onClick={handleAddOrder}>
-              <Save className="w-3.5 h-3.5 mr-1" /> {isEditMode ? '저장' : '오더 등록'}
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs px-6" onClick={handleAddOrder}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> 오더 등록
+            </Button>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs px-6" onClick={handleUpdateOrder} disabled={!isEditMode}>
+              <Save className="w-3.5 h-3.5 mr-1" /> 저장
             </Button>
             <Button size="sm" variant="secondary" className="bg-red-900/40 hover:bg-red-800 text-red-200 border border-red-500/30 h-8 text-xs px-4" onClick={handleDeleteOrder}>
               <Trash2 className="w-3.5 h-3.5 mr-1" /> 삭제

@@ -6,8 +6,12 @@ const pool = mysql.createPool({
   password: '',
   database: 'hmd_weld_robot_v2',
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  connectionLimit: 20,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+  idleTimeout: 60000, // 60 seconds
+  maxIdle: 10
 });
 
 export default pool;
