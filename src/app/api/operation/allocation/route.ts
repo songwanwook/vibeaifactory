@@ -58,6 +58,55 @@ export async function GET(request: Request) {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { 
+      orderDate,
+      robotNo,
+      projNo,
+      workNum,
+      blockName,
+      employeeNumber,
+      prodActNo
+    } = body
+
+    // Generate ProdActID if not provided (e.g., projNo-prodActNo-1)
+    const prodActId = body.prodActId || `${projNo}-${prodActNo || Math.floor(Math.random() * 1000)}-1`
+
+    const query = `
+      INSERT INTO work_order_tbl 
+      (ProdActID, OrderDate, RobotNo, ProjNo, WorkNum, BlockName, EmployeeNumber, ProdActNo, AssyName, StartDateTime, FinishDateTime)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'NA', ?, ?)
+    `
+    
+    const startDateTime = orderDate
+    const finishDate = new Date(orderDate)
+    finishDate.setDate(finishDate.getDate() + 7)
+    const finishDateTime = finishDate.toISOString().split('T')[0]
+
+    const params = [
+      prodActId,
+      orderDate,
+      robotNo,
+      projNo,
+      workNum || 0,
+      blockName,
+      employeeNumber,
+      prodActNo || 'NA',
+      startDateTime,
+      finishDateTime
+    ]
+
+    await pool.query(query, params)
+    
+    return NextResponse.json({ message: '작업오더가 성공적으로 등록되었습니다.', prodActId })
+  } catch (error: any) {
+    console.error('Failed to register work order:', error)
+    return NextResponse.json({ error: error.message || '작업오더 등록에 실패했습니다.' }, { status: 500 })
+  }
+}
+
 export async function PUT(request: Request) {
   try {
     const body = await request.json()

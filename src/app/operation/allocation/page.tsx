@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ClipboardList, Loader2, RotateCcw, Edit2, Trash2 } from "lucide-react";
+import { ClipboardList, Loader2, RotateCcw, Edit2, Trash2, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -48,8 +48,21 @@ export default function RobotWorkOrderPage() {
     robotNo: 'ALL',
     finishStatus: 'ALL'
   });
+  
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  const [newOrder, setNewOrder] = useState<Partial<WorkOrder>>({
+    orderDate: new Date().toISOString().split('T')[0],
+    robotNo: '',
+    projNo: '',
+    workNum: '0',
+    blockName: '',
+    employeeNumber: '',
+    prodActNo: ''
+  });
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -120,6 +133,36 @@ export default function RobotWorkOrderPage() {
     }
   };
 
+  const handleRegister = async () => {
+    try {
+      const res = await fetch('/api/operation/allocation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newOrder),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        toast({ title: "성공", description: result.message });
+        setIsAddDialogOpen(false);
+        setNewOrder({
+          orderDate: new Date().toISOString().split('T')[0],
+          robotNo: '',
+          projNo: '',
+          workNum: '0',
+          blockName: '',
+          employeeNumber: '',
+          prodActNo: ''
+        });
+        fetchData();
+      } else {
+        toast({ title: "오류", description: result.error, variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('Failed to register:', error);
+      toast({ title: "오류", description: "등록 중 오류가 발생했습니다.", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full -m-6 bg-[#0f172a]">
       {/* 상단 브레드크럼 섹션 */}
@@ -140,7 +183,10 @@ export default function RobotWorkOrderPage() {
             <Button size="sm" variant="secondary" className="bg-slate-700 hover:bg-slate-600 text-white h-8 text-xs" onClick={fetchData}>
               <RotateCcw className="w-3.5 h-3.5 mr-1" /> 새로고침
             </Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs px-6" onClick={fetchData}>조회</Button>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs px-4" onClick={fetchData}>조회</Button>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs px-4" onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> 오더 등록
+            </Button>
           </div>
         </div>
 
@@ -260,11 +306,89 @@ export default function RobotWorkOrderPage() {
         </div>
       </div>
 
+      {/* 등록 다이얼로그 */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="bg-slate-900 border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle>새 작업오더 등록</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right text-xs">오더일자</Label>
+              <Input 
+                type="date"
+                className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                value={newOrder.orderDate}
+                onChange={(e) => setNewOrder({ ...newOrder, orderDate: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right text-xs">로봇번호</Label>
+              <Input 
+                placeholder="장비번호 입력"
+                className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                value={newOrder.robotNo}
+                onChange={(e) => setNewOrder({ ...newOrder, robotNo: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right text-xs">호선번호</Label>
+              <Input 
+                placeholder="호선번호 입력"
+                className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                value={newOrder.projNo}
+                onChange={(e) => setNewOrder({ ...newOrder, projNo: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right text-xs">Activity No</Label>
+              <Input 
+                placeholder="오더번호 입력"
+                className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                value={newOrder.prodActNo}
+                onChange={(e) => setNewOrder({ ...newOrder, prodActNo: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right text-xs">실적횟수</Label>
+              <Input 
+                type="number"
+                className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                value={newOrder.workNum}
+                onChange={(e) => setNewOrder({ ...newOrder, workNum: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right text-xs">블럭명</Label>
+              <Input 
+                placeholder="블럭명 입력"
+                className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                value={newOrder.blockName}
+                onChange={(e) => setNewOrder({ ...newOrder, blockName: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right text-xs">담당자 사번</Label>
+              <Input 
+                placeholder="사번 입력"
+                className="col-span-3 h-8 bg-slate-800 border-white/10 text-xs" 
+                value={newOrder.employeeNumber}
+                onChange={(e) => setNewOrder({ ...newOrder, employeeNumber: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" className="h-8 text-xs hover:bg-white/5" onClick={() => setIsAddDialogOpen(false)}>취소</Button>
+            <Button className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700" onClick={handleRegister}>등록 완료</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* 수정 다이얼로그 */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="bg-slate-900 border-white/10 text-white max-w-md">
           <DialogHeader>
-            <DialogTitle>작업오더 수정</DialogTitle>
+            <DialogTitle>작업오더 저장 (수정)</DialogTitle>
           </DialogHeader>
           {selectedOrder && (
             <div className="grid gap-4 py-4">
@@ -322,7 +446,7 @@ export default function RobotWorkOrderPage() {
           )}
           <DialogFooter>
             <Button variant="ghost" className="h-8 text-xs hover:bg-white/5" onClick={() => setIsEditDialogOpen(false)}>취소</Button>
-            <Button className="h-8 text-xs bg-blue-600 hover:bg-blue-700" onClick={handleUpdate}>수정 완료</Button>
+            <Button className="h-8 text-xs bg-blue-600 hover:bg-blue-700" onClick={handleUpdate}>저장 완료</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
