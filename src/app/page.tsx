@@ -1,16 +1,28 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { ControlPanel } from "@/components/dashboard/ControlPanel"
 import { ProductionCalendar } from "@/components/dashboard/ProductionCalendar"
 import { KPISidebar } from "@/components/dashboard/KPISidebar"
 
+export interface ProductionCalendarHandle {
+  refresh: () => Promise<void>;
+}
+
 export default function DashboardPage() {
   const [filterType, setFilterType] = useState<'all' | 'production' | 'other'>('all');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const calendarRef = useRef<ProductionCalendarHandle>(null);
 
   const handleToday = () => {
     setCurrentDate(new Date());
+  };
+
+  const handleAddEventSuccess = () => {
+    if (calendarRef.current) {
+      calendarRef.current.refresh();
+    }
   };
 
   return (
@@ -28,14 +40,19 @@ export default function DashboardPage() {
           filterType={filterType} 
           onFilterChange={setFilterType} 
           onToday={handleToday}
+          onAddEvent={() => setIsAddDialogOpen(true)}
         />
         
         {/* Center: Calendar (Requested) */}
         <div className="flex-1 flex flex-col overflow-hidden bg-[#2d3748]">
           <ProductionCalendar 
+            ref={calendarRef}
             filterType={filterType} 
             currentDate={currentDate}
             setCurrentDate={setCurrentDate}
+            isAddDialogOpen={isAddDialogOpen}
+            setIsAddDialogOpen={setIsAddDialogOpen}
+            onAddEventSuccess={handleAddEventSuccess}
           />
           
           {/* Footer Copyright */}
