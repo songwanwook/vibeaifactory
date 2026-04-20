@@ -29,6 +29,7 @@ import {
   subMonths, 
   addDays,
   subDays,
+  addHours,
   startOfMonth, 
   endOfMonth, 
   startOfWeek, 
@@ -63,7 +64,7 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
     const [formData, setFormData] = useState({
       title: '',
       start: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-      end: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+      end: format(addHours(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
       ev_type: 'HUMAN',
       category: '업무',
       color: '#2e86de',
@@ -102,7 +103,16 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
 
     const handleInputChange = (field: string, value: string) => {
       setFormData(prev => {
-        const newData = { ...prev, [field]: value };
+        let newData = { ...prev, [field]: value };
+        
+        // 시작일시 변경 시 종료일시 자동 조정 (최소 1시간 후)
+        if (field === 'start') {
+          const startDate = parseISO(value);
+          const endDate = parseISO(newData.end);
+          if (endDate <= startDate) {
+            newData.end = format(addHours(startDate, 1), "yyyy-MM-dd'T'HH:mm");
+          }
+        }
         
         // ev_type 변경 시 자동 색상 변경 및 카테고리 처리
         if (field === 'ev_type') {
@@ -148,7 +158,7 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
           setFormData({
             title: '',
             start: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-            end: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+            end: format(addHours(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
             ev_type: 'HUMAN',
             category: '업무',
             color: '#2e86de',
