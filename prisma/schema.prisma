@@ -20,3 +20,20 @@ model User {
 
   @@map("user_tbl")
 }
+
+model ScheduleEvent {
+  id        BigInt   @id @default(autoincrement())
+  title     String   @db.VarChar(200)
+  startDt   DateTime @map("start_dt")
+  endDt     DateTime? @map("end_dt")
+  allDay    Boolean  @default(false) @map("all_day")
+  category  String?  @db.VarChar(50)
+  color     String?  @db.VarChar(16)
+  memo      String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  evType    String   @default("HUMAN") @map("ev_type") @db.VarChar(45)
+
+  @@index([startDt, endDt], map: "idx_schedule_range")
+  @@index([startDt, endDt, evType], map: "idx_schedule_event_range")
+  @@map("schedule_event")
+}

@@ -1,10 +1,9 @@
 "use client"
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Info, Calendar as CalendarIcon, Clock, User, Cpu, Tag, Briefcase } from "lucide-react"
-import { CALENDAR_EVENTS } from "@/lib/mock-data"
+import { ChevronLeft, ChevronRight, Info, Calendar as CalendarIcon, Clock, User, Cpu, Tag, Briefcase, Loader2, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { 
   Dialog,
@@ -12,7 +11,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { 
   format, 
   addMonths, 
@@ -41,6 +51,109 @@ interface ProductionCalendarProps {
 export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: ProductionCalendarProps) {
   const [viewType, setViewType] = useState<'monthly' | 'weekly' | 'daily'>('monthly');
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // 일정 추가 관련 상태
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    start: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    end: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    ev_type: 'HUMAN',
+    category: '업무',
+    color: '#2e86de',
+    memo: ''
+  });
+
+  // DB에서 일정 데이터 페칭
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/schedule-events');
+      if (response.ok) {
+        const data = await response.json();
+        const formattedData = data.map((ev: any) => ({
+          ...ev,
+          start: typeof ev.start === 'string' ? ev.start : format(new Date(ev.start), "yyyy-MM-dd HH:mm:ss"),
+          end: typeof ev.end === 'string' ? ev.end : format(new Date(ev.end), "yyyy-MM-dd HH:mm:ss")
+        }));
+        setEvents(formattedData);
+      }
+    } catch (error) {
+      console.error('Failed to load events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // ev_type 변경 시 자동 색상 변경 및 카테고리 처리
+      if (field === 'ev_type') {
+        if (value === 'ROBOT') {
+          newData.color = '#8e44ad';
+          newData.category = '';
+        } else {
+          newData.color = '#2e86de'; // 기본 생산색상
+          newData.category = '업무';
+        }
+      }
+      
+      // 색상 변경에 따른 업무 구분 처리 (임의)
+      if (field === 'color') {
+        if (value === '#8e44ad') newData.ev_type = 'ROBOT';
+        else newData.ev_type = 'HUMAN';
+      }
+
+      return newData;
+    });
+  };
+
+  const handleAddEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // datetime-local의 T 포맷을 DB 호환 포맷으로 변환
+      const submitData = {
+        ...formData,
+        start: formData.start.replace('T', ' ') + ':00',
+        end: formData.end.replace('T', ' ') + ':00'
+      };
+
+      const response = await fetch('/api/schedule-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitData)
+      });
+
+      if (response.ok) {
+        setIsAddDialogOpen(false);
+        setFormData({
+          title: '',
+          start: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+          end: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+          ev_type: 'HUMAN',
+          category: '업무',
+          color: '#2e86de',
+          memo: ''
+        });
+        await fetchEvents();
+      }
+    } catch (error) {
+      console.error('Failed to add event:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
@@ -77,9 +190,9 @@ export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: 
 
   // 필터링된 이벤트 리스트
   const filteredEvents = useMemo(() => {
-    if (filterType === 'all') return CALENDAR_EVENTS;
-    return CALENDAR_EVENTS.filter(event => getWorkClassification(event.color) === filterType);
-  }, [filterType]);
+    if (filterType === 'all') return events;
+    return events.filter(event => getWorkClassification(event.color) === filterType);
+  }, [filterType, events]);
 
   // 슬롯 할당 알고리즘 (필터링된 데이터 기반)
   const eventSlots = useMemo(() => {
@@ -166,7 +279,15 @@ export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: 
           </CardTitle>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={() => setIsAddDialogOpen(true)}
+            size="sm" 
+            className="h-8 gap-1.5 bg-sky-600 hover:bg-sky-500 text-white border-none text-[11px] font-bold"
+          >
+            <Plus size={14} /> 일정 추가
+          </Button>
+
           <div className="flex items-center bg-[#0f172a] rounded-md p-1 gap-1 border border-white/5">
             <Button 
               size="sm" 
@@ -211,10 +332,16 @@ export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: 
         )}
         
         <div className={cn(
-          "grid h-full bg-[#334155] overflow-y-auto",
+          "grid h-full bg-[#334155] overflow-y-auto relative",
           viewType === 'monthly' ? "grid-cols-7 grid-rows-5" : 
           viewType === 'weekly' ? "grid-cols-7" : "grid-cols-1"
         )}>
+          {loading && (
+            <div className="absolute inset-0 bg-[#334155]/50 z-50 flex items-center justify-center backdrop-blur-[1px]">
+              <Loader2 className="w-8 h-8 text-sky-400 animate-spin" />
+            </div>
+          )}
+
           {days.map((day, i) => {
             const isSelectedMonth = isSameMonth(day, currentDate);
             const dayEventsBySlot = new Array(eventSlots.maxTracks).fill(null);
@@ -289,6 +416,142 @@ export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: 
         </div>
       </CardContent>
 
+      {/* 일정 추가 다이얼로그 */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="bg-[#1e293b] border-white/10 text-white max-w-md">
+          <form onSubmit={handleAddEvent}>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-sky-400 flex items-center gap-2">
+                <Plus className="w-5 h-5" /> 새 일정 추가
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                중앙 달력에 표시될 새로운 일정을 등록합니다.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-6">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-xs font-bold text-slate-400 uppercase">일정 제목</Label>
+                <Input 
+                  id="title" 
+                  value={formData.title} 
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  className="bg-[#0f172a] border-white/10 text-white h-9" 
+                  placeholder="제목을 입력하세요"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start" className="text-xs font-bold text-slate-400 uppercase">시작 일시</Label>
+                  <Input 
+                    id="start" 
+                    type="datetime-local"
+                    value={formData.start} 
+                    onChange={(e) => handleInputChange('start', e.target.value)}
+                    className="bg-[#0f172a] border-white/10 text-white h-9" 
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end" className="text-xs font-bold text-slate-400 uppercase">종료 일시</Label>
+                  <Input 
+                    id="end" 
+                    type="datetime-local"
+                    value={formData.end} 
+                    onChange={(e) => handleInputChange('end', e.target.value)}
+                    className="bg-[#0f172a] border-white/10 text-white h-9" 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="ev_type" className="text-xs font-bold text-slate-400 uppercase">작업 주체</Label>
+                  <Select 
+                    value={formData.ev_type} 
+                    onValueChange={(val) => handleInputChange('ev_type', val)}
+                  >
+                    <SelectTrigger className="bg-[#0f172a] border-white/10 text-white h-9">
+                      <SelectValue placeholder="주체 선택" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1e293b] border-white/10 text-white">
+                      <SelectItem value="HUMAN">인력 작업</SelectItem>
+                      <SelectItem value="ROBOT">로봇 작업</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="text-xs font-bold text-slate-400 uppercase">카테고리</Label>
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(val) => handleInputChange('category', val)}
+                    disabled={formData.ev_type === 'ROBOT'}
+                  >
+                    <SelectTrigger className="bg-[#0f172a] border-white/10 text-white h-9">
+                      <SelectValue placeholder="카테고리" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1e293b] border-white/10 text-white">
+                      <SelectItem value="업무">업무</SelectItem>
+                      <SelectItem value="개인">개인</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="color" className="text-xs font-bold text-slate-400 uppercase">업무 구분 (색상)</Label>
+                <Select 
+                  value={formData.color} 
+                  onValueChange={(val) => handleInputChange('color', val)}
+                >
+                  <SelectTrigger className="bg-[#0f172a] border-white/10 text-white h-9">
+                    <SelectValue placeholder="구분 선택" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1e293b] border-white/10 text-white">
+                    <SelectItem value="#2e86de"><span className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#2e86de]" /> 생산</span></SelectItem>
+                    <SelectItem value="#27ae60"><span className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#27ae60]" /> 기타</span></SelectItem>
+                    <SelectItem value="#8e44ad"><span className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#8e44ad]" /> 로봇</span></SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="memo" className="text-xs font-bold text-slate-400 uppercase">상세 내용 (메모)</Label>
+                <Textarea 
+                  id="memo" 
+                  value={formData.memo} 
+                  onChange={(e) => handleInputChange('memo', e.target.value)}
+                  className="bg-[#0f172a] border-white/10 text-white min-h-[80px]" 
+                  placeholder="추가 메모 사항을 입력하세요"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => setIsAddDialogOpen(false)}
+                className="text-slate-400 hover:bg-white/5"
+              >
+                취소
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="bg-sky-600 hover:bg-sky-500 text-white px-8"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : '등록 완료'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 상세 보기 다이얼로그 */}
       <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
         <DialogContent className="bg-[#1e293b] border-white/10 text-white max-w-md">
           <DialogHeader>
@@ -346,6 +609,16 @@ export function ProductionCalendar({ filterType, currentDate, setCurrentDate }: 
                     </div>
                   </div>
                 </div>
+
+                {selectedEvent.memo && (
+                  <div className="flex items-start gap-3 border-t border-white/5 pt-3">
+                    <Info className="w-4 h-4 text-slate-400 mt-1" />
+                    <div>
+                      <p className="text-xs text-slate-500 font-bold uppercase">상세 내용</p>
+                      <p className="text-sm text-slate-300">{selectedEvent.memo}</p>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="flex justify-end">
