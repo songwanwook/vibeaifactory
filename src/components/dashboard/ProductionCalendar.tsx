@@ -69,6 +69,7 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
     const [selectedEvent, setSelectedEvent] = useState<any>(null);
     const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isEditMode, setIsEditMode] = useState(false);
     
     // 일정 추가 관련 상태
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,6 +119,23 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
     useEffect(() => {
       fetchEvents();
     }, []);
+
+    const resetFormData = () => {
+      const resetStart = startOfHour(addHours(new Date(), 1));
+      const resetEnd = addHours(resetStart, 1);
+      setFormData({
+        title: '',
+        startDate: format(resetStart, "yyyy-MM-dd"),
+        startTime: format(resetStart, "HH:mm"),
+        endDate: format(resetEnd, "yyyy-MM-dd"),
+        endTime: format(resetEnd, "HH:mm"),
+        ev_type: 'HUMAN',
+        category: '업무',
+        color: '#2e86de',
+        memo: ''
+      });
+      setIsEditMode(false);
+    };
 
     const handleInputChange = (field: string, value: string) => {
       setFormData(prev => {
@@ -188,7 +206,7 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
         const startDt = new Date(sy, sm - 1, sd, sh, smin);
         const endDt = new Date(ey, em - 1, ed, eh, emin);
 
-        const submitData = {
+        const submitData: any = {
           title: formData.title,
           start: format(startDt, "yyyy-MM-dd HH:mm:ss"),
           end: format(endDt, "yyyy-MM-dd HH:mm:ss"),
@@ -198,34 +216,78 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
           memo: formData.memo
         };
 
-        const response = await fetch('/api/schedule-events', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(submitData)
-        });
-
-        if (response.ok) {
-          setIsAddDialogOpen(false);
-          const resetStart = startOfHour(addHours(new Date(), 1));
-          const resetEnd = addHours(resetStart, 1);
-          setFormData({
-            title: '',
-            startDate: format(resetStart, "yyyy-MM-dd"),
-            startTime: format(resetStart, "HH:mm"),
-            endDate: format(resetEnd, "yyyy-MM-dd"),
-            endTime: format(resetEnd, "HH:mm"),
-            ev_type: 'HUMAN',
-            category: '업무',
-            color: '#2e86de',
-            memo: ''
+        if (isEditMode && selectedEvent) {
+          submitData.id = selectedEvent.id;
+          const response = await fetch('/api/schedule-events', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submitData)
           });
-          onAddEventSuccess();
+          if (response.ok) {
+            setIsAddDialogOpen(false);
+            resetFormData();
+            fetchEvents();
+            onAddEventSuccess();
+          }
+        } else {
+          const response = await fetch('/api/schedule-events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submitData)
+          });
+          if (response.ok) {
+            setIsAddDialogOpen(false);
+            resetFormData();
+            fetchEvents();
+            onAddEventSuccess();
+          }
         }
       } catch (error) {
-        console.error('Failed to add event:', error);
+        console.error('Failed to process event:', error);
       } finally {
         setIsSubmitting(false);
       }
+    };
+
+    const handleDeleteEvent = async () => {
+      if (!selectedEvent || !confirm('이 일정을 삭제하시겠습니까?')) return;
+      
+      try {
+        const response = await fetch(`/api/schedule-events?id=${selectedEvent.id}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          setSelectedEvent(null);
+          fetchEvents();
+          onAddEventSuccess();
+        }
+      } catch (error) {
+        console.error('Failed to delete event:', error);
+      }
+    };
+
+    const openEditDialog = () => {
+      if (!selectedEvent) return;
+      
+      const start = parseISO(selectedEvent.start);
+      const end = parseISO(selectedEvent.end);
+      
+      setFormData({
+        title: selectedEvent.title,
+        startDate: format(start, "yyyy-MM-dd"),
+        startTime: format(start, "HH:mm"),
+        endDate: format(end, "yyyy-MM-dd"),
+        endTime: format(end, "HH:mm"),
+        ev_type: selectedEvent.ev_type,
+        category: selectedEvent.category || '업무',
+        color: selectedEvent.color || '#2e86de',
+        memo: selectedEvent.memo || ''
+      });
+      
+      setIsEditMode(true);
+      setSelectedEvent(null);
+      setIsAddDialogOpen(true);
     };
 
     const monthStart = startOfMonth(currentDate);
@@ -727,10 +789,30 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
                   )}
                 </div>
                 
-                <div className="flex justify-end">
-                  <Button variant="secondary" onClick={() => setSelectedEvent(null)} className="h-9 px-6 text-xs bg-slate-700 hover:bg-slate-600 text-white border-none">
-                    닫기
+                <div className="flex justify-between items-center mt-6">
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleDeleteEvent}
+                    className="h-9 px-4 text-xs bg-rose-600 hover:bg-rose-700"
+                  >
+                    삭제
                   </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="secondary" 
+                      onClick={openEditDialog}
+                      className="h-9 px-4 text-xs bg-amber-600 hover:bg-amber-700 text-white border-none"
+                    >
+                      수정
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => setSelectedEvent(null)} 
+                      className="h-9 px-4 text-xs bg-slate-700 hover:bg-slate-600 text-white border-none"
+                    >
+                      닫기
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

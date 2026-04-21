@@ -74,3 +74,71 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create schedule event', details: error.message }, { status: 500 })
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json()
+    const { id, title, start, end, all_day, category, color, memo, ev_type } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    const query = `
+      UPDATE schedule_event SET 
+        title = ?, 
+        start_dt = ?, 
+        end_dt = ?, 
+        all_day = ?, 
+        category = ?, 
+        color = ?, 
+        memo = ?, 
+        ev_type = ?
+      WHERE id = ?
+    `
+    const params = [
+      title, 
+      start, 
+      end || null, 
+      all_day ? 1 : 0, 
+      category || null, 
+      color, 
+      memo || '', 
+      ev_type || 'HUMAN',
+      id
+    ]
+
+    const [result]: any = await pool.query(query, params)
+    
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('Detailed PUT Error:', error)
+    return NextResponse.json({ error: 'Failed to update schedule event', details: error.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    const [result]: any = await pool.query('DELETE FROM schedule_event WHERE id = ?', [id])
+    
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('Detailed DELETE Error:', error)
+    return NextResponse.json({ error: 'Failed to delete schedule event', details: error.message }, { status: 500 })
+  }
+}
