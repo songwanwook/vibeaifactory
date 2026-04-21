@@ -11,7 +11,13 @@ const pool = mysql.createPool({
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
   idleTimeout: 60000, // 60 seconds
-  maxIdle: 10
+  maxIdle: 10,
+  timezone: '+09:00',
+  dateStrings: [
+    'DATE',
+    'DATETIME',
+    'TIMESTAMP'
+  ]
 });
 
 export default pool;

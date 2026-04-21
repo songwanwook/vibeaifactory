@@ -18,23 +18,28 @@ export async function GET() {
       ORDER BY start_dt ASC
     `)
 
-    // JSON 직렬화를 위해 필요한 데이터 변환 (all_day를 boolean으로)
     const events = rows.map((row: any) => ({
       ...row,
       all_day: !!row.all_day,
-      id: row.id.toString() // BigInt 호환성
+      id: row.id.toString()
     }))
 
     return NextResponse.json(events)
-  } catch (error) {
-    console.error('Failed to fetch schedule events:', error)
-    return NextResponse.json({ error: 'Failed to fetch schedule events' }, { status: 500 })
+  } catch (error: any) {
+    console.error('Detailed GET Error:', {
+      message: error.message,
+      code: error.code,
+      sqlState: error.sqlState,
+      stack: error.stack
+    })
+    return NextResponse.json({ error: 'Failed to fetch schedule events', details: error.message }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
+    console.log('POST Body:', body)
     const { title, start, end, all_day, category, color, memo, ev_type } = body
 
     const query = `
@@ -59,8 +64,13 @@ export async function POST(request: Request) {
       success: true, 
       id: result.insertId.toString() 
     })
-  } catch (error) {
-    console.error('Failed to create schedule event:', error)
-    return NextResponse.json({ error: 'Failed to create schedule event' }, { status: 500 })
+  } catch (error: any) {
+    console.error('Detailed POST Error:', {
+      message: error.message,
+      code: error.code,
+      sqlState: error.sqlState,
+      stack: error.stack
+    })
+    return NextResponse.json({ error: 'Failed to create schedule event', details: error.message }, { status: 500 })
   }
 }

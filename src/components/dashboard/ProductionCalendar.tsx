@@ -30,6 +30,7 @@ import {
   addDays,
   subDays,
   addHours,
+  subHours,
   startOfMonth, 
   endOfMonth, 
   startOfWeek, 
@@ -39,7 +40,10 @@ import {
   isSameDay,
   isWithinInterval,
   parseISO,
-  differenceInDays
+  differenceInDays,
+  setHours,
+  setMinutes,
+  startOfHour
 } from "date-fns"
 import { ko } from "date-fns/locale"
 
@@ -52,6 +56,13 @@ interface ProductionCalendarProps {
   onAddEventSuccess: () => void;
 }
 
+// 시간 옵션 생성 (00:00 ~ 23:30, 30분 단위)
+const TIME_OPTIONS = Array.from({ length: 48 }).map((_, i) => {
+  const hour = Math.floor(i / 2).toString().padStart(2, '0');
+  const minute = (i % 2 === 0 ? '00' : '30');
+  return `${hour}:${minute}`;
+});
+
 export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
   ({ filterType, currentDate, setCurrentDate, isAddDialogOpen, setIsAddDialogOpen, onAddEventSuccess }, ref) => {
     const [viewType, setViewType] = useState<'monthly' | 'weekly' | 'daily'>('monthly');
@@ -61,10 +72,17 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
     
     // 일정 추가 관련 상태
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // 초기 시간 설정 (내일 오전 9시 기본)
+    const initialStart = startOfHour(addHours(new Date(), 1));
+    const initialEnd = addHours(initialStart, 1);
+
     const [formData, setFormData] = useState({
       title: '',
-      start: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-      end: format(addHours(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
+      startDate: format(initialStart, "yyyy-MM-dd"),
+      startTime: format(initialStart, "HH:mm"),
+      endDate: format(initialEnd, "yyyy-MM-dd"),
+      endTime: format(initialEnd, "HH:mm"),
       ev_type: 'HUMAN',
       category: '업무',
       color: '#2e86de',
@@ -105,12 +123,34 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
       setFormData(prev => {
         let newData = { ...prev, [field]: value };
         
-        // 시작일시 변경 시 종료일시 자동 조정 (최소 1시간 후)
-        if (field === 'start') {
-          const startDate = parseISO(value);
-          const endDate = parseISO(newData.end);
-          if (endDate <= startDate) {
-            newData.end = format(addHours(startDate, 1), "yyyy-MM-dd'T'HH:mm");
+        // 날짜와 시간을 조합하여 Date 객체 생성 유틸리티
+        const getFullDate = (dateStr: string, timeStr: string) => {
+          const [y, m, d] = dateStr.split('-').map(Number);
+          const [hh, mm] = timeStr.split(':').map(Number);
+          return new Date(y, m - 1, d, hh, mm);
+        };
+
+        // 시작 일시 변경 시 종료 일시 자동 조정
+        if (field === 'startDate' || field === 'startTime') {
+          const startFull = getFullDate(newData.startDate, newData.startTime);
+          const endFull = getFullDate(newData.endDate, newData.endTime);
+          
+          if (endFull <= startFull) {
+            const newEndFull = addHours(startFull, 1);
+            newData.endDate = format(newEndFull, "yyyy-MM-dd");
+            newData.endTime = format(newEndFull, "HH:mm");
+          }
+        }
+
+        // 종료 일시 변경 시 시작 일시 체크 (역전 방지)
+        if (field === 'endDate' || field === 'endTime') {
+          const startFull = getFullDate(newData.startDate, newData.startTime);
+          const endFull = getFullDate(newData.endDate, newData.endTime);
+          
+          if (endFull <= startFull) {
+            const newStartFull = subHours(endFull, 1);
+            newData.startDate = format(newStartFull, "yyyy-MM-dd");
+            newData.startTime = format(newStartFull, "HH:mm");
           }
         }
         
@@ -140,11 +180,22 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
       setIsSubmitting(true);
       
       try {
-        // datetime-local의 T 포맷을 DB 호환 포맷으로 변환
+        const [sy, sm, sd] = formData.startDate.split('-').map(Number);
+        const [sh, smin] = formData.startTime.split(':').map(Number);
+        const [ey, em, ed] = formData.endDate.split('-').map(Number);
+        const [eh, emin] = formData.endTime.split(':').map(Number);
+        
+        const startDt = new Date(sy, sm - 1, sd, sh, smin);
+        const endDt = new Date(ey, em - 1, ed, eh, emin);
+
         const submitData = {
-          ...formData,
-          start: formData.start.replace('T', ' ') + ':00',
-          end: formData.end.replace('T', ' ') + ':00'
+          title: formData.title,
+          start: format(startDt, "yyyy-MM-dd HH:mm:ss"),
+          end: format(endDt, "yyyy-MM-dd HH:mm:ss"),
+          ev_type: formData.ev_type,
+          category: formData.category,
+          color: formData.color,
+          memo: formData.memo
         };
 
         const response = await fetch('/api/schedule-events', {
@@ -155,10 +206,14 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
 
         if (response.ok) {
           setIsAddDialogOpen(false);
+          const resetStart = startOfHour(addHours(new Date(), 1));
+          const resetEnd = addHours(resetStart, 1);
           setFormData({
             title: '',
-            start: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-            end: format(addHours(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
+            startDate: format(resetStart, "yyyy-MM-dd"),
+            startTime: format(resetStart, "HH:mm"),
+            endDate: format(resetEnd, "yyyy-MM-dd"),
+            endTime: format(resetEnd, "HH:mm"),
             ev_type: 'HUMAN',
             category: '업무',
             color: '#2e86de',
@@ -396,20 +451,24 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
                           key={event.id}
                           onClick={() => setSelectedEvent(event)}
                           className={cn(
-                            "h-6 text-[11px] px-2 flex items-center text-white shadow-sm relative overflow-visible cursor-pointer hover:brightness-110 active:scale-[0.98] transition-all",
+                            "h-6 text-[11px] px-2 flex items-center text-white shadow-sm relative cursor-pointer hover:brightness-110 active:scale-[0.98] transition-all",
                             viewType === 'monthly' || viewType === 'weekly' ? (
                               cn(
                                 isStart ? "ml-1 rounded-l-sm" : "-ml-[1px] border-l-0 rounded-l-none",
                                 isEnd ? "mr-1 rounded-r-sm" : "-mr-[1px] border-r-0 rounded-r-none",
-                                showTitle ? "z-20" : "z-10"
+                                showTitle ? "z-20" : "z-10",
+                                isEnd ? "overflow-hidden" : "overflow-visible"
                               )
-                            ) : "mx-1 rounded-sm z-10"
+                            ) : "mx-1 rounded-sm z-10 overflow-hidden"
                           )}
                           style={{ backgroundColor: event.color }}
                           title={event.title}
                         >
                           {showTitle && (
-                            <span className="whitespace-nowrap absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none z-30">
+                            <span className={cn(
+                              "truncate pointer-events-none z-30 block w-full",
+                              viewType === 'daily' ? "" : "whitespace-nowrap"
+                            )}>
                               {event.title}
                               {viewType === 'daily' && !event.all_day && ` [${format(start, "HH:mm")} - ${format(end, "HH:mm")}]`}
                             </span>
@@ -452,28 +511,65 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
                   />
                 </div>
 
+                {/* 시작 일시 선택 */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="start" className="text-xs font-bold text-slate-400 uppercase">시작 일시</Label>
+                    <Label className="text-xs font-bold text-slate-400 uppercase">시작 날짜</Label>
                     <Input 
-                      id="start" 
-                      type="datetime-local"
-                      value={formData.start} 
-                      onChange={(e) => handleInputChange('start', e.target.value)}
-                      className="bg-[#0f172a] border-white/10 text-white h-9" 
+                      type="date" 
+                      value={formData.startDate} 
+                      onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      className="h-9 bg-[#0f172a] border-white/10 text-xs text-white [color-scheme:dark]" 
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="end" className="text-xs font-bold text-slate-400 uppercase">종료 일시</Label>
+                    <Label className="text-xs font-bold text-slate-400 uppercase">시작 시간</Label>
+                    <Select 
+                      value={formData.startTime} 
+                      onValueChange={(val) => handleInputChange('startTime', val)}
+                    >
+                      <SelectTrigger className="bg-[#0f172a] border-white/10 text-white h-9">
+                        <Clock className="mr-2 h-4 w-4 text-emerald-400" />
+                        <SelectValue placeholder="시간 선택" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1e293b] border-white/10 text-white max-h-60">
+                        {TIME_OPTIONS.map((time) => (
+                          <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* 종료 일시 선택 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-400 uppercase">종료 날짜</Label>
                     <Input 
-                      id="end" 
-                      type="datetime-local"
-                      value={formData.end} 
-                      onChange={(e) => handleInputChange('end', e.target.value)}
-                      className="bg-[#0f172a] border-white/10 text-white h-9" 
+                      type="date" 
+                      value={formData.endDate} 
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      className="h-9 bg-[#0f172a] border-white/10 text-xs text-white [color-scheme:dark]" 
                       required
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-400 uppercase">종료 시간</Label>
+                    <Select 
+                      value={formData.endTime} 
+                      onValueChange={(val) => handleInputChange('endTime', val)}
+                    >
+                      <SelectTrigger className="bg-[#0f172a] border-white/10 text-white h-9">
+                        <Clock className="mr-2 h-4 w-4 text-rose-400" />
+                        <SelectValue placeholder="시간 선택" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1e293b] border-white/10 text-white max-h-60">
+                        {TIME_OPTIONS.map((time) => (
+                          <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
