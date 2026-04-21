@@ -71,6 +71,8 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
     const [loading, setLoading] = useState(true);
     const [isEditMode, setIsEditMode] = useState(false);
     
+    const [editingEvent, setEditingEvent] = useState<any>(null);
+    
     // 일정 추가 관련 상태
     const [isSubmitting, setIsSubmitting] = useState(false);
     
@@ -135,6 +137,7 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
         memo: ''
       });
       setIsEditMode(false);
+      setEditingEvent(null);
     };
 
     const handleInputChange = (field: string, value: string) => {
@@ -216,8 +219,8 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
           memo: formData.memo
         };
 
-        if (isEditMode && selectedEvent) {
-          submitData.id = selectedEvent.id;
+        if (isEditMode && editingEvent) {
+          submitData.id = editingEvent.id;
           const response = await fetch('/api/schedule-events', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -286,6 +289,7 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
       });
       
       setIsEditMode(true);
+      setEditingEvent(selectedEvent);
       setSelectedEvent(null);
       setIsAddDialogOpen(true);
     };
@@ -547,16 +551,19 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
           </div>
         </CardContent>
 
-        {/* 일정 추가 다이얼로그 */}
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        {/* 일정 추가/수정 다이얼로그 */}
+        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+          setIsAddDialogOpen(open);
+          if (!open) resetFormData();
+        }}>
           <DialogContent className="bg-[#1e293b] border-white/10 text-white max-w-md">
             <form onSubmit={handleAddEvent}>
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold text-sky-400 flex items-center gap-2">
-                  <Plus className="w-5 h-5" /> 새 일정 추가
+                  <Plus className="w-5 h-5" /> {isEditMode ? '일정 수정하기' : '새 일정 추가'}
                 </DialogTitle>
                 <DialogDescription className="text-slate-400">
-                  중앙 달력에 표시될 새로운 일정을 등록합니다.
+                  {isEditMode ? '기존 일정의 정보를 수정합니다.' : '중앙 달력에 표시될 새로운 일정을 등록합니다.'}
                 </DialogDescription>
               </DialogHeader>
 
@@ -710,9 +717,12 @@ export const ProductionCalendar = forwardRef<any, ProductionCalendarProps>(
                 <Button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="bg-sky-600 hover:bg-sky-500 text-white px-8"
+                  className={cn(
+                    "px-8 text-white",
+                    isEditMode ? "bg-amber-600 hover:bg-amber-500" : "bg-sky-600 hover:bg-sky-500"
+                  )}
                 >
-                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : '등록 완료'}
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (isEditMode ? '수정하기' : '등록 완료')}
                 </Button>
               </DialogFooter>
             </form>
